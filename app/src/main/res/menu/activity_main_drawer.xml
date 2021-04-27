@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group
+        android:id="@+id/menu1"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/homemenuItem"
+            android:icon="@drawable/ic_baseline_home_24"
+            android:title="@string/home" />
+        <item
+            android:id="@+id/appelmenuItem"
+            android:icon="@drawable/ic_baseline_call_24"
+            android:title="@string/appel" />
+        <item
+            android:id="@+id/meesagemenuItem"
+            android:icon="@drawable/ic_baseline_message_24"
+            android:title="@string/messages_menu_tittle" />
+        <item
+            android:id="@+id/parlemenuItem"
+            android:icon="@drawable/ic_baseline_headset_mic_24"
+            android:title="@string/parler" />
+        <item
+            android:id="@+id/tracemenuItem"
+            android:icon="@drawable/ic_baseline_map_24"
+            android:title="@string/trace" />
+        <item
+            android:id="@+id/polygonItem"
+            android:icon="@drawable/ic_baseline_not_interested_24"
+            android:title="@string/restriction" />
+        <item
+            android:id="@+id/logoutmenuItem"
+            android:icon="@drawable/ic_baseline_login_24"
+            android:title="@string/logout" />
+
+    </group>
+</menu>
