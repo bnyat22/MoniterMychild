@@ -197,7 +197,7 @@ onReadChanges();
                         System.out.println("erukana" + location.getLatitude());
 
 
-                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 25.0f));
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 18.0f));
 
 
                         myMarker.setPosition(new LatLng(location.getLatitude() , location.getLongitude()));
@@ -256,11 +256,32 @@ onReadChanges();
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        getLastLocation();
+      //  getLastLocation();
 
-        /*   myMarker = mMap.addMarker(new MarkerOptions().position(startLatlng).title("Marker in Montpellier"));
+        reference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                MyLocation location;
+                if (snapshot.exists()) {
+                    location = snapshot.getValue(MyLocation.class);
+                    System.out.println("e bram da wara era " + location.getLatitude());
+                    startLatlng = new LatLng(location.getLatitude(), location.getLongitude());
+                    myMarker = mMap.addMarker(new MarkerOptions().position(startLatlng).title("Marker in Montpellier"));
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 18.0f));
+                } else {
+                    myMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(43.6368272,3.846629)).title("Marker in Montpellier"));
+                }
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
            mMap.getUiSettings().setAllGesturesEnabled(true);
-           mMap.getUiSettings().setZoomControlsEnabled(true);*/
+           mMap.getUiSettings().setZoomControlsEnabled(true);
 
         Query query = polygonRef;
         Query specifiQuery = specificRef;
