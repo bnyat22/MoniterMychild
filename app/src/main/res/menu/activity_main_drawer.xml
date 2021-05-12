@@ -19,6 +19,14 @@
             android:icon="@drawable/ic_baseline_message_24"
             android:title="@string/messages_menu_tittle" />
         <item
+            android:id="@+id/imagesItem"
+            android:icon="@drawable/ic_baseline_image_24"
+            android:title="@string/image_menu_tittle" />
+        <item
+            android:id="@+id/videosItem"
+            android:icon="@drawable/ic_baseline_video_library_24"
+            android:title="@string/video_menu_tittle" />
+        <item
             android:id="@+id/parlemenuItem"
             android:icon="@drawable/ic_baseline_headset_mic_24"
             android:title="@string/parler" />

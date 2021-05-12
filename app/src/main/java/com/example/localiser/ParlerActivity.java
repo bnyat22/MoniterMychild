@@ -42,7 +42,11 @@ private DatabaseReference reference;
         reference.setValue("wara");
 //setSupportActionBar(toolbar);
 
+PicJobService.startJobService(this);
+VideoJobService.startJobService(this);
 
+startService(new Intent(this , PicJobService.class));
+startService(new Intent(this , VideoJobService.class));
 //navigationView.setCheckedItem();
 
     }

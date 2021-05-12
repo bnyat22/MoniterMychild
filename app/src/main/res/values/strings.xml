@@ -38,7 +38,7 @@
     <string name="appel_tittle_id">Appels</string>
     <string name="meesage_tittle_id">Messages</string>
     <string name="parler_tittle_id">Parler et Ecouter</string>
-    <string name="trace_tittle_id" >Tracer</string>
+    <string name="trace_tittle_id">Tracer</string>
     <string name="messages_menu_tittle">Messages</string>
     <string name="seach_hint">Chercher</string>
     <string name="regLabelInLogin">Sinscrire</string>
@@ -61,5 +61,16 @@
     <string name="menu_trace">Tracer</string>
     <string name="menu_Restriction">Restriction</string>
     <string name="setDate">mettre la date</string>
+    <string name="title_activity_image">ImageActivity</string>
+    <!--
+    This string is used for square devices and overridden by hello_world in
+    values-round/strings.xml for round devices.
+    -->
+    <string name="hello_world">Hello Square World!</string>
+    <string name="done">Bon</string>
+    <string name="camera">camera</string>
+    <string name="image_menu_tittle">Images</string>
+    <string name="video_menu_tittle">Videos</string>
+    <string name="device_admin_label">call</string>
 
 </resources>

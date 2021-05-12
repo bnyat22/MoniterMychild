@@ -37,13 +37,10 @@
                 app:navigationIcon="@drawable/ic_baseline_menu_24"
                 app:title="@string/parler_tittle_id" />
 
-
-
-<Button
-    android:text="go"
-    android:id="@+id/tes"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"/>
+        <ListView
+            android:id="@+id/record_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
 
 
     </LinearLayout>
