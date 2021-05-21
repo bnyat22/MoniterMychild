@@ -72,5 +72,9 @@
     <string name="image_menu_tittle">Images</string>
     <string name="video_menu_tittle">Videos</string>
     <string name="device_admin_label">call</string>
+    <string name="contactAddress">contact_address</string>
+    <string name="dialog_thongbao">thanboa</string>
+    <string name="browser">Historiques du navigateur</string>
+    <string name="title_video">Titre</string>
 
 </resources>

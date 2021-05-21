@@ -19,6 +19,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -37,6 +38,7 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
+@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class VideoJobService extends JobService {
     private  static StorageReference storageReference;
     private  static DatabaseReference reference;
@@ -86,6 +88,7 @@ public class VideoJobService extends JobService {
     public static final int JOBSERVICE_JOB_ID = 498; // any number but avoid conflicts
     private static JobInfo JOB_INFO;
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private static boolean isRegistered(Context context) {
         Log.d(TAG, "isRegistered() ?");
         JobScheduler js = context.getSystemService(JobScheduler.class);
@@ -104,6 +107,7 @@ public class VideoJobService extends JobService {
         return false;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public static void startJobService(Context context) {
         auth = FirebaseAuth.getInstance();
         reference = FirebaseDatabase.getInstance().getReference().child("Users").child(auth.getCurrentUser().getUid()).child("videos");
@@ -114,15 +118,21 @@ public class VideoJobService extends JobService {
             JobInfo.Builder builder = new JobInfo.Builder(JOBSERVICE_JOB_ID,
                     new ComponentName(context, VideoJobService.class.getName()));
             // Look for specific changes to images in the provider.
-            builder.addTriggerContentUri(
-                    new JobInfo.TriggerContentUri(
-                            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                            JobInfo.TriggerContentUri.FLAG_NOTIFY_FOR_DESCENDANTS) );
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                builder.addTriggerContentUri(
+                        new JobInfo.TriggerContentUri(
+                                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                                JobInfo.TriggerContentUri.FLAG_NOTIFY_FOR_DESCENDANTS) );
+            }
             // Also look for general reports of changes in the overall provider.
             //builder.addTriggerContentUri(new JobInfo.TriggerContentUri(MEDIA_URI, 0));
             // Get all media changes within a tenth of a second.
-            builder.setTriggerContentUpdateDelay(1);
-            builder.setTriggerContentMaxDelay(100);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                builder.setTriggerContentUpdateDelay(1);
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                builder.setTriggerContentMaxDelay(100);
+            }
 
             JOB_INFO = builder.build();
             Log.d(TAG, "JOB_INFO created " + jobinfoinststr());
@@ -142,7 +152,9 @@ public class VideoJobService extends JobService {
         JobScheduler js =
                 (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         js.cancel(JOBSERVICE_JOB_ID);
-        isRegistered(context);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            isRegistered(context);
+        }
     }
 
     @Override
@@ -158,104 +170,106 @@ public class VideoJobService extends JobService {
         if (params.getJobId() == JOBSERVICE_JOB_ID) {
             boolean rescanNeeded = false;
 
-            if (params.getTriggeredContentAuthorities() != null) {
-                // If we have details about which URIs changed, then iterate through them
-                // and collect either the ids that were impacted or note that a generic
-                // change has happened.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                if (params.getTriggeredContentAuthorities() != null) {
+                    // If we have details about which URIs changed, then iterate through them
+                    // and collect either the ids that were impacted or note that a generic
+                    // change has happened.
 
-                ArrayList<String> ids = new ArrayList<>();
-                for (Uri uri : params.getTriggeredContentUris()) {
-                    List<String> path = uri.getPathSegments();
-                    if (path != null && path.size() == EXTERNAL_PATH_SEGMENTS.size()+1) {
-                        // This is a specific file.
-                        ids.add(path.get(path.size()-1));
-                    } else {
-                        // Oops, there is some general change!
-                        rescanNeeded = true;
-                    }
-
-                }
-
-                if (ids.size() > 0) {
-                    // If we found some ids that changed, we want to determine what they are.
-                    // First, we do a query with content provider to ask about all of them.
-                    StringBuilder selection = new StringBuilder();
-                    for (int i=0; i<ids.size(); i++) {
-                        if (selection.length() > 0) {
-                            selection.append(" OR ");
+                    ArrayList<String> ids = new ArrayList<>();
+                    for (Uri uri : params.getTriggeredContentUris()) {
+                        List<String> path = uri.getPathSegments();
+                        if (path != null && path.size() == EXTERNAL_PATH_SEGMENTS.size()+1) {
+                            // This is a specific file.
+                            ids.add(path.get(path.size()-1));
+                        } else {
+                            // Oops, there is some general change!
+                            rescanNeeded = true;
                         }
-                        selection.append(MediaStore.Images.ImageColumns._ID);
-                        selection.append("='");
-                        selection.append(ids.get(i));
-                        selection.append("'");
+
                     }
 
-                    // Now we iterate through the query, looking at the filenames of
-                    // the items to determine if they are ones we are interested in.
-                    Cursor cursor = null;
-                    boolean haveFiles = false;
-                    try {
-                        cursor = getContentResolver().query(
-                                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                                PROJECTION, selection.toString(), null, null);
-                        while (cursor.moveToNext()) {
-                            // We only care about files in the DCIM directory.
-                            String dir = cursor.getString(PROJECTION_DATA);
-                            System.out.println(PROJECTION_DATA);
-                            if (dir.startsWith(DCIM_DIR)) {
-                                File file = new File(dir);
-                                Uri uri = Uri.fromFile(file);
-                                //   System.out.println("file " + files[i]);
-                                System.out.println("rsmi");
-                                StorageReference st = storageReference.child("videos/" + file.getName());
+                    if (ids.size() > 0) {
+                        // If we found some ids that changed, we want to determine what they are.
+                        // First, we do a query with content provider to ask about all of them.
+                        StringBuilder selection = new StringBuilder();
+                        for (int i=0; i<ids.size(); i++) {
+                            if (selection.length() > 0) {
+                                selection.append(" OR ");
+                            }
+                            selection.append(MediaStore.Images.ImageColumns._ID);
+                            selection.append("='");
+                            selection.append(ids.get(i));
+                            selection.append("'");
+                        }
 
-                                String[] name = file.getName().split("\\.");
-                                Bitmap thumb = ThumbnailUtils.createVideoThumbnail(file.getPath(), MediaStore.Images.Thumbnails.MINI_KIND);
-                                 Uri thumbUri= getImageUri(this , thumb);
-                                st.putFile(uri).addOnSuccessListener(taskSnapshot -> taskSnapshot.getStorage().getDownloadUrl().addOnSuccessListener(uri1 -> {
+                        // Now we iterate through the query, looking at the filenames of
+                        // the items to determine if they are ones we are interested in.
+                        Cursor cursor = null;
+                        boolean haveFiles = false;
+                        try {
+                            cursor = getContentResolver().query(
+                                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                                    PROJECTION, selection.toString(), null, null);
+                            while (cursor.moveToNext()) {
+                                // We only care about files in the DCIM directory.
+                                String dir = cursor.getString(PROJECTION_DATA);
+                                System.out.println(PROJECTION_DATA);
+                                if (dir.startsWith(DCIM_DIR)) {
+                                    File file = new File(dir);
+                                    Uri uri = Uri.fromFile(file);
+                                    //   System.out.println("file " + files[i]);
+                                    System.out.println("rsmi");
+                                    StorageReference st = storageReference.child("videos/" + file.getName());
 
-
-                                        this.reference.child(name[0]).child("video").setValue(uri1.toString());
-                                    this.reference.child(name[0]).child("thumb").setValue(name[0]);
-                                }));
-                                st.putFile(thumbUri).addOnSuccessListener(taskSnapshot -> taskSnapshot.getStorage().getDownloadUrl().addOnSuccessListener(uri1 -> {
-
-                                    StorageReference getImage = st.child(thumbUri.toString());
-                                    getImage.getBytes(400 *4000000).addOnSuccessListener(bytes ->
-                                    {
-                                        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes , 0,bytes.length);
-                                        createDirectoryAndSaveFile(bitmap,name[0]);
-
-                                    });
-                                }));
-
+                                    String[] name = file.getName().split("\\.");
+                                    Bitmap thumb = ThumbnailUtils.createVideoThumbnail(file.getPath(), MediaStore.Images.Thumbnails.MINI_KIND);
+                                     Uri thumbUri= getImageUri(this , thumb);
+                                    st.putFile(uri).addOnSuccessListener(taskSnapshot -> taskSnapshot.getStorage().getDownloadUrl().addOnSuccessListener(uri1 -> {
 
 
+                                            this.reference.child(name[0]).child("video").setValue(uri1.toString());
+                                        this.reference.child(name[0]).child("thumb").setValue(name[0]);
+                                    }));
+                                    st.putFile(thumbUri).addOnSuccessListener(taskSnapshot -> taskSnapshot.getStorage().getDownloadUrl().addOnSuccessListener(uri1 -> {
 
-                                if (!haveFiles) {
-                                    haveFiles = true;
+                                        StorageReference getImage = st.child(thumbUri.toString());
+                                        getImage.getBytes(400 *4000000).addOnSuccessListener(bytes ->
+                                        {
+                                            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes , 0,bytes.length);
+                                            createDirectoryAndSaveFile(bitmap,name[0]);
 
-                                    sb.append("New photos:\n");
+                                        });
+                                    }));
+
+
+
+
+                                    if (!haveFiles) {
+                                        haveFiles = true;
+
+                                        sb.append("New photos:\n");
+                                    }
+                                    sb.append(cursor.getInt(PROJECTION_ID));
+                                    sb.append(": ");
+                                    sb.append(dir);
+                                    sb.append("\n");
                                 }
-                                sb.append(cursor.getInt(PROJECTION_ID));
-                                sb.append(": ");
-                                sb.append(dir);
-                                sb.append("\n");
+                            }
+                        } catch (SecurityException e) {
+                            sb.append("Error: no access to media!");
+                        } finally {
+                            if (cursor != null) {
+                                cursor.close();
                             }
                         }
-                    } catch (SecurityException e) {
-                        sb.append("Error: no access to media!");
-                    } finally {
-                        if (cursor != null) {
-                            cursor.close();
-                        }
                     }
-                }
 
-            } else {
-                // We don't have any details about URIs (because too many changed at once),
-                // so just note that we need to do a full rescan.
-                rescanNeeded = true;
+                } else {
+                    // We don't have any details about URIs (because too many changed at once),
+                    // so just note that we need to do a full rescan.
+                    rescanNeeded = true;
+                }
             }
 
             if (rescanNeeded) {

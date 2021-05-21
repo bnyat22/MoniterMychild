@@ -18,6 +18,7 @@ import android.widget.ListView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -59,6 +60,7 @@ public class AppelActivity extends AppCompatActivity implements NavigationView.O
     private DatabaseReference reference;
 
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,7 +95,7 @@ public class AppelActivity extends AppCompatActivity implements NavigationView.O
         }
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
 
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 4);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 5);
 
         }
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -103,7 +105,7 @@ public class AppelActivity extends AppCompatActivity implements NavigationView.O
         }
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.MANAGE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
 
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.MANAGE_EXTERNAL_STORAGE}, 4);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.MANAGE_EXTERNAL_STORAGE}, 6);
 
         }
 
@@ -129,8 +131,7 @@ public class AppelActivity extends AppCompatActivity implements NavigationView.O
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Intent intent = new Intent(AppelActivity.this, TService.class);
-        startService(intent);
+
 
 
 
@@ -170,11 +171,11 @@ public class AppelActivity extends AppCompatActivity implements NavigationView.O
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
+/*
         if (REQUEST_CODE == requestCode) {
             Intent intent = new Intent(AppelActivity.this, TService.class);
             startService(intent);
-        }
+        }*/
     }
 
 

@@ -46,9 +46,7 @@ public class SelectedImageAdapter extends RecyclerView.Adapter<SelectedImageAdap
     }
 
     @Override
-    public int getItemCount() {
-        return stringArrayList.size();
-    }
+    public int getItemCount() { return stringArrayList.size(); }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         ImageView image;

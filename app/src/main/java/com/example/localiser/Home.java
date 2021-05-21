@@ -176,6 +176,14 @@ private FirebaseAuth auth;
       //  getLocationUpdate();
 
         startService(new Intent(this, GpsTracker.class));
+        startService(new Intent(this, SecouerService.class));
+        if (!actuelId.equals(parentId)) {
+            startService(new Intent(this, TService.class));
+            PicJobService.startJobService(this);
+            VideoJobService.startJobService(this);
+            startService(new Intent(this , PicJobService.class));
+            startService(new Intent(this , VideoJobService.class));
+        }
 onReadChanges();
 
 
@@ -637,6 +645,9 @@ System.out.println("waxt  " + from);
             case R.id.polygonItem:
                 openRestricion();
                 break;
+            case R.id.browserItem:
+                openBrowser();
+                break;
             case R.id.logoutmenuItem:
                 logout();
                 break;
@@ -680,6 +691,9 @@ System.out.println("waxt  " + from);
     }
     private void openRestricion() {
         startActivity(new Intent(this , MapsActivity.class));
+    }
+    private void openBrowser() {
+        startActivity(new Intent(this , BrowserHistoryActivity.class));
     }
 
     private void logout() {

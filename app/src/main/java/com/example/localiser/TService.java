@@ -173,6 +173,36 @@ public class TService extends Service {
                 if ((bundle = intent.getExtras()) != null) {
                     outCall = intent.getStringExtra(Intent.EXTRA_PHONE_NUMBER);
                     Toast.makeText(context, "OUT : " + outCall, Toast.LENGTH_LONG).show();
+                    File sampleDir = new File(Environment.getExternalStorageDirectory()+ "/TestRecordingDasa1");
+                    if (!sampleDir.exists()) {
+                        System.out.println("file aka nya");
+                        sampleDir.mkdir();
+                    }
+                    String file_name = "Record";
+                    try {
+                        audiofile = File.createTempFile(file_name, ".amr", sampleDir);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    String path = Environment.getExternalStorageDirectory().getAbsolutePath();
+
+                    recorder = new MediaRecorder();
+//                          recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_CALL);
+
+                    recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION);
+                    recorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);
+                    recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+                    File  mFileName = new File(Environment.getExternalStorageDirectory().getAbsolutePath(),"/record");
+                    recorder.setOutputFile(audiofile.getAbsolutePath());
+                    try {
+                        recorder.prepare();
+                    } catch (IllegalStateException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    recorder.start();
+                    recordstarted = true;
                 }
             }
         }

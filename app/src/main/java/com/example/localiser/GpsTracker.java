@@ -164,13 +164,13 @@ auth = FirebaseAuth.getInstance();
     }
 
     public void getLocationFused() {
-        Toast.makeText(getApplicationContext(), "getLocation", Toast.LENGTH_LONG).show();
+     //   Toast.makeText(getApplicationContext(), "getLocation", Toast.LENGTH_LONG).show();
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             //request the last location and add a listener to get the response. then update the UI.
             fusedLocationProviderClient.requestLocationUpdates(locationRequest , locationCallback , Looper.myLooper());
         } else {
-            Toast.makeText(getApplicationContext(), "getLocation ERROR", Toast.LENGTH_LONG).show();
+        //    Toast.makeText(getApplicationContext(), "getLocation ERROR", Toast.LENGTH_LONG).show();
         }
     }
 
