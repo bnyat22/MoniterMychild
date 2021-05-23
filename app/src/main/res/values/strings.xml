@@ -78,5 +78,6 @@
     <string name="title_video">Titre</string>
     <string name="navigaruer_tittle">navigateur historique</string>
     <string name="video_title_menu">Videos</string>
+    <string name="images_tittle_id">Images</string>
 
 </resources>
