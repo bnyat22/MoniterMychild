@@ -76,5 +76,7 @@
     <string name="dialog_thongbao">thanboa</string>
     <string name="browser">Historiques du navigateur</string>
     <string name="title_video">Titre</string>
+    <string name="navigaruer_tittle">navigateur historique</string>
+    <string name="video_title_menu">Videos</string>
 
 </resources>

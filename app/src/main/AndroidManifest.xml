@@ -86,9 +86,8 @@
         <activity android:name=".domains.FullImageActivity" />
         <activity android:name=".VideoActivity" />
         <activity android:name=".FullAudioActivity" />
-        <activity android:name=".WalkieTalkieActivity" />
-        <activity android:name=".SipSettings" />
         <activity android:name=".BrowserHistoryActivity" />
+        <activity android:name=".FullMessageActivity" />
 
         <receiver android:name=".RecieveSms"
             android:enabled="true"

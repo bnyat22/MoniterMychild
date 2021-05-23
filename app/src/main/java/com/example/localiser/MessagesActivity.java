@@ -19,6 +19,7 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -33,6 +34,9 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.example.localiser.domains.ImageModel;
+import com.example.localiser.domains.MessageAdapter;
+import com.example.localiser.domains.MyAudio;
+import com.example.localiser.domains.MyMessage;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -60,6 +64,7 @@ public class MessagesActivity extends AppCompatActivity implements NavigationVie
     private Toolbar toolbar;
     private FirebaseAuth auth;
    private ListView listView;
+   private MessageAdapter adapter;
     static JobInfo JOB_INFO;
     private StorageReference storageReference;
     private DatabaseReference reference;
@@ -85,20 +90,19 @@ public class MessagesActivity extends AppCompatActivity implements NavigationVie
         }
 
         reference = FirebaseDatabase.getInstance().getReference().child("Users").child(auth.getCurrentUser().getUid()).child("messages");
-        List<String> messages = new ArrayList<>();
+        List<MyMessage> messages = new ArrayList<>();
         Query query = reference;
         query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot ds:snapshot.getChildren())
                 {
-                    String from = ds.getKey();
-                    String body = ds.getValue(String.class);
-                    messages.add(from);
-                    messages.add(body);
+                    MyMessage myMessage = new MyMessage(ds.getKey(), ds.getValue(String.class));
+                    messages.add(myMessage);
+
 
                 }
-                ArrayAdapter<String> adapter = new ArrayAdapter<String>(MessagesActivity.this,android.R.layout.simple_list_item_1,messages);
+            adapter = new MessageAdapter(MessagesActivity.this,messages);
                 listView.setAdapter(adapter);
             }
 
@@ -107,7 +111,16 @@ public class MessagesActivity extends AppCompatActivity implements NavigationVie
 
             }
         });
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            MyMessage message = (MyMessage) listView.getItemAtPosition(position);
+            startActivity(new Intent(this,FullMessageActivity.class)
+                    .putExtra("title",message.getTitle())
+                    .putExtra("body",message.getBody()));
+        });
+
     }
+
+
 
     @Override
     public void onBackPressed() {
@@ -132,11 +145,20 @@ public class MessagesActivity extends AppCompatActivity implements NavigationVie
             case R.id.parlemenuItem:
                 openParler();
                 break;
+            case R.id.imagesItem:
+                openImages();
+                break;
+            case R.id.videosItem:
+                openVidoes();
+                break;
             case R.id.tracemenuItem:
                 openTrace();
                 break;
             case R.id.polygonItem:
                 openRestricion();
+                break;
+            case R.id.browserItem:
+                openBrowser();
                 break;
             case R.id.logoutmenuItem:
                 logout();
@@ -146,6 +168,15 @@ public class MessagesActivity extends AppCompatActivity implements NavigationVie
         return true;
     }
 
+    private void openVidoes() {
+        Intent intent = new Intent(this , VideoActivity.class);
+        startActivity(intent);
+    }
+
+    private void openImages() {
+        Intent intent = new Intent(this , ImageActivity.class);
+        startActivity(intent);
+    }
 
 
     private void openHome() {
@@ -172,6 +203,9 @@ public class MessagesActivity extends AppCompatActivity implements NavigationVie
     }
     private void openRestricion() {
         startActivity(new Intent(this , MapsActivity.class));
+    }
+    private void openBrowser() {
+        startActivity(new Intent(this , BrowserHistoryActivity.class));
     }
 
     private void logout() {

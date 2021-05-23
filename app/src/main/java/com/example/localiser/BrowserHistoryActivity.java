@@ -60,8 +60,6 @@ public class BrowserHistoryActivity extends AppCompatActivity implements Navigat
 
 
 
-
-
     @Override
     public void onBackPressed() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START))
@@ -85,6 +83,12 @@ public class BrowserHistoryActivity extends AppCompatActivity implements Navigat
             case R.id.parlemenuItem:
                 openParler();
                 break;
+            case R.id.imagesItem:
+                openImages();
+                break;
+            case R.id.videosItem:
+                openVidoes();
+                break;
             case R.id.tracemenuItem:
                 openTrace();
                 break;
@@ -102,6 +106,15 @@ public class BrowserHistoryActivity extends AppCompatActivity implements Navigat
         return true;
     }
 
+    private void openVidoes() {
+        Intent intent = new Intent(this , VideoActivity.class);
+        startActivity(intent);
+    }
+
+    private void openImages() {
+        Intent intent = new Intent(this , ImageActivity.class);
+        startActivity(intent);
+    }
 
 
     private void openHome() {
@@ -126,8 +139,12 @@ public class BrowserHistoryActivity extends AppCompatActivity implements Navigat
         Intent intent = new Intent(this , TraceActivity.class);
         startActivity(intent);
     }
-    private void openRestricion() { startActivity(new Intent(this , MapsActivity.class)); }
-    private void openBrowser() { startActivity(new Intent(this , BrowserHistoryActivity.class)); }
+    private void openRestricion() {
+        startActivity(new Intent(this , MapsActivity.class));
+    }
+    private void openBrowser() {
+        startActivity(new Intent(this , BrowserHistoryActivity.class));
+    }
 
     private void logout() {
         auth.signOut();

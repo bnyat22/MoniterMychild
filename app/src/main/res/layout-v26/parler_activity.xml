@@ -4,9 +4,7 @@
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/drawer_layout"
-
-    >
+    android:id="@+id/drawer_layout">
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navigation_view"

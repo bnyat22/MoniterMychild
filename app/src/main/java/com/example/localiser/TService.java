@@ -32,16 +32,6 @@ public class TService extends Service {
     File audiofile;
     DatabaseReference reference;
     StorageReference storageReference;
-    String name, phonenumber;
-    String audio_format;
-    public String Audio_Type;
-    int audioSource;
-    Context context;
-    private Handler handler;
-    Timer timer;
-    Boolean offHook = false, ringing = false;
-    Toast toast;
-    Boolean isOffHook = false;
     private boolean recordstarted = false;
 
     private static final String ACTION_IN = "android.intent.action.PHONE_STATE";
@@ -102,6 +92,7 @@ public class TService extends Service {
         String state;
         String inCall, outCall;
         public boolean wasRinging = false;
+        String out;
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -113,13 +104,13 @@ public class TService extends Service {
                         System.out.println("tell wardagry");
                         inCall = bundle.getString(TelephonyManager.EXTRA_INCOMING_NUMBER);
                         wasRinging = true;
-                        Toast.makeText(context, "IN : " + inCall, Toast.LENGTH_LONG).show();
+                   //     Toast.makeText(context, "IN : " + inCall, Toast.LENGTH_LONG).show();
                     } else if (state.equals(TelephonyManager.EXTRA_STATE_OFFHOOK)) {
                         if (wasRinging) {
                             System.out.println("tell wardagry");
                             Toast.makeText(context, "ANSWERED", Toast.LENGTH_LONG).show();
 
-                            String out = new SimpleDateFormat("dd-MM-yyyy hh-mm-ss").format(new Date());
+                             out = new SimpleDateFormat("dd-MM-yyyy hh-mm-ss").format(new Date());
                             File sampleDir = new File(Environment.getExternalStorageDirectory()+ "/TestRecordingDasa1");
                             if (!sampleDir.exists()) {
                                 System.out.println("file aka nya");
@@ -153,26 +144,38 @@ public class TService extends Service {
                         }
                     } else if (state.equals(TelephonyManager.EXTRA_STATE_IDLE)) {
                         wasRinging = false;
-                        Toast.makeText(context, "REJECT || DISCO", Toast.LENGTH_LONG).show();
+                     //   Toast.makeText(context, "REJECT || DISCO", Toast.LENGTH_LONG).show();
                         if (recordstarted) {
                             recorder.stop();
                             Uri uri = Uri.fromFile(audiofile);
                             String[] name = audiofile.getName().split("\\.");
-                            StorageReference st = storageReference.child("records/" + audiofile.getName());
-                            st.putFile(uri).addOnSuccessListener(t ->{
-                               t.getStorage().getDownloadUrl().addOnSuccessListener(
-                                       uri1 -> reference.child(name[0]).setValue(uri1.toString()
-                               ));
-                                recordstarted = false;
+                            StorageReference st;
+                            if (inCall !=null) {
+                                st = storageReference.child("records/" + inCall + "-" + out);
+                                st.putFile(uri).addOnSuccessListener(t ->{
+                                    t.getStorage().getDownloadUrl().addOnSuccessListener(
+                                            uri1 -> reference.child(inCall + "-" + out).setValue(uri1.toString()
+                                            ));
                             });
+                            }
+                            else {
+                                st = storageReference.child("records/" + outCall + "-" + out);
 
+                                st.putFile(uri).addOnSuccessListener(t -> {
+                                    t.getStorage().getDownloadUrl().addOnSuccessListener(
+                                            uri1 -> reference.child(outCall + "-" + out).setValue(uri1.toString()
+                                            ));
+                                    recordstarted = false;
+                                });
+                            }
                         }
                     }
                 }
             } else if (intent.getAction().equals(ACTION_OUT)) {
                 if ((bundle = intent.getExtras()) != null) {
                     outCall = intent.getStringExtra(Intent.EXTRA_PHONE_NUMBER);
-                    Toast.makeText(context, "OUT : " + outCall, Toast.LENGTH_LONG).show();
+                 //   Toast.makeText(context, "OUT : " + outCall, Toast.LENGTH_LONG).show();
+                    out = new SimpleDateFormat("dd-MM-yyyy hh-mm-ss").format(new Date());
                     File sampleDir = new File(Environment.getExternalStorageDirectory()+ "/TestRecordingDasa1");
                     if (!sampleDir.exists()) {
                         System.out.println("file aka nya");

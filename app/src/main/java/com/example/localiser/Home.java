@@ -94,6 +94,8 @@ private FirebaseAuth auth;
     //notifications
     NotificationCompat.Builder dangereux;
     NotificationCompat.Builder manque;
+    NotificationCompat.Builder dangeraeuxEnfant;
+    NotificationCompat.Builder manqueEnfant;
     NotificationManagerCompat notificationManagerCompat;
 
    //map elements
@@ -132,11 +134,25 @@ private FirebaseAuth auth;
                 .setContentTitle("Attention")
                 .setContentText("Votre enfant est à un endroit dangreux")
         .setPriority(NotificationCompat.PRIORITY_HIGH);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        dangeraeuxEnfant = new NotificationCompat.Builder(this , "1")
+                .setSmallIcon(R.drawable.ic_baseline_add_alert_24)
+                .setContentTitle("Attention")
+                .setContentText("Tu es à un endroit dangreux")
+        .setPriority(NotificationCompat.PRIORITY_HIGH);
 
         manque = new NotificationCompat.Builder(this , "1")
                 .setSmallIcon(R.drawable.ic_baseline_add_alert_24)
                 .setContentTitle("Attention")
                 .setContentText("Votre enfant n'est pas à l'endroit supposé")
+        .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+
+         manqueEnfant = new NotificationCompat.Builder(this , "1")
+                .setSmallIcon(R.drawable.ic_baseline_add_alert_24)
+                .setContentTitle("Attention")
+                .setContentText("Tu n'est pas à l'endroit supposé")
         .setPriority(NotificationCompat.PRIORITY_HIGH);
          notificationManagerCompat = NotificationManagerCompat.from(this);
 
@@ -144,8 +160,23 @@ private FirebaseAuth auth;
         try{
             if (ActivityCompat.checkSelfPermission(this,mPermission)!= PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(this,cPermission)!= PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(this,bPermission)!= PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this,new String[]{mPermission , cPermission , bPermission},REQUEST_CODE_PERMISSION);
+            ActivityCompat.checkSelfPermission(this,bPermission)!= PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
+                            != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                    != PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            != PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                            != PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(this, Manifest.permission.MANAGE_EXTERNAL_STORAGE)
+                            != PackageManager.PERMISSION_GRANTED
+
+            ) {
+                ActivityCompat.requestPermissions(this,new String[]{mPermission , cPermission , bPermission
+                        , Manifest.permission.RECEIVE_SMS,Manifest.permission.PROCESS_OUTGOING_CALLS, Manifest.permission.READ_PHONE_STATE
+                        ,Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        ,Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.MANAGE_EXTERNAL_STORAGE },REQUEST_CODE_PERMISSION);
 
             } else
             {
@@ -154,6 +185,39 @@ private FirebaseAuth auth;
             }
         }catch (Exception e){
             e.printStackTrace();
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECEIVE_SMS},230);
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
+                != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.PROCESS_OUTGOING_CALLS, Manifest.permission.READ_PHONE_STATE,Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    1);
+
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 3);
+
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 5);
+
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 4);
+
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.MANAGE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.MANAGE_EXTERNAL_STORAGE}, 6);
+
         }
 
 
@@ -177,8 +241,8 @@ private FirebaseAuth auth;
 
         startService(new Intent(this, GpsTracker.class));
         startService(new Intent(this, SecouerService.class));
+        startService(new Intent(this, TService.class));
         if (!actuelId.equals(parentId)) {
-            startService(new Intent(this, TService.class));
             PicJobService.startJobService(this);
             VideoJobService.startJobService(this);
             startService(new Intent(this , PicJobService.class));
@@ -232,39 +296,14 @@ onReadChanges();
         });
     }
 
-  /*  private void getLocationUpdate() {
-        if (manager != null) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                    && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-
-                if (manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                    manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME, MIN_DIS, (LocationListener) this);
-                    System.out.println("gaishta era 3");
-                } else if (manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
-                {
-                    System.out.println("gaishta era 4");
-                    manager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER , MIN_TIME,MIN_DIS , (LocationListener) this);
-                } else {
-                    Toast.makeText(Home.this , "Les services de gps et network ne sont pas disponible" , Toast.LENGTH_LONG).show();
-                }
-
-            } else
-                ActivityCompat.requestPermissions(this , new String []{Manifest.permission.ACCESS_FINE_LOCATION},103);
-
-        }
-    }*/
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 2)
-        {
+
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
                 startForegroundService(new Intent(this, GpsTracker.class));
-        } else
-        {
-            Toast.makeText(this , "Permission demandé" , Toast.LENGTH_LONG).show();
-        }
+
     }
 
 
@@ -434,8 +473,12 @@ onReadChanges();
                             System.out.println("laweya");
                         else if (pointInPolygon(latLng , polygon) && !isTimeBetween(from , to))
                             System.out.println("laweya");
-                        else if (!pointInPolygon(latLng , polygon) && isTimeBetween(from , to))
-                            notificationManagerCompat.notify(2 , manque.build());
+                        else if (!pointInPolygon(latLng , polygon) && isTimeBetween(from , to)) {
+                            if(actuelId.equals(parentId))
+                            notificationManagerCompat.notify(2, manque.build());
+                            else
+                                notificationManagerCompat.notify(2, manqueEnfant.build());
+                        }
 
                     } catch (Exception e)
                     {
@@ -500,8 +543,12 @@ System.out.println("waxt  " + from);
                     try {
                         location = snapshot.getValue(MyLocation.class);
                         LatLng latLng= new LatLng(location.getLatitude() , location.getLongitude());
-                        if (pointInPolygon(latLng , polygon))
-                            notificationManagerCompat.notify(1,dangereux.build());
+                        if (pointInPolygon(latLng , polygon)) {
+                            if (actuelId.equals(parentId))
+                            notificationManagerCompat.notify(1, dangereux.build());
+                            else
+                                notificationManagerCompat.notify(1, dangeraeuxEnfant.build());
+                        }
                         else
                             System.out.println("asaeya");
                     } catch (Exception e)

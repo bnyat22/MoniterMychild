@@ -31,7 +31,7 @@ public class IncomingCallReceiver extends BroadcastReceiver {
                 }
             };
 
-            WalkieTalkieActivity wtActivity = (WalkieTalkieActivity) context;
+
 
 //            incomingCall = wtActivity.manager.takeAudioCall(intent, listener);
             incomingCall.answerCall(30);

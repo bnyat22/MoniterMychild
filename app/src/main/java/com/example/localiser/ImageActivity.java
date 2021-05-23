@@ -364,11 +364,20 @@ System.out.println("kuiiii");
             case R.id.parlemenuItem:
                 openParler();
                 break;
+            case R.id.imagesItem:
+                openImages();
+                break;
+            case R.id.videosItem:
+                openVidoes();
+                break;
             case R.id.tracemenuItem:
                 openTrace();
                 break;
             case R.id.polygonItem:
                 openRestricion();
+                break;
+            case R.id.browserItem:
+                openBrowser();
                 break;
             case R.id.logoutmenuItem:
                 logout();
@@ -378,6 +387,15 @@ System.out.println("kuiiii");
         return true;
     }
 
+    private void openVidoes() {
+        Intent intent = new Intent(this , VideoActivity.class);
+        startActivity(intent);
+    }
+
+    private void openImages() {
+        Intent intent = new Intent(this , ImageActivity.class);
+        startActivity(intent);
+    }
 
 
     private void openHome() {
@@ -404,6 +422,9 @@ System.out.println("kuiiii");
     }
     private void openRestricion() {
         startActivity(new Intent(this , MapsActivity.class));
+    }
+    private void openBrowser() {
+        startActivity(new Intent(this , BrowserHistoryActivity.class));
     }
 
     private void logout() {

@@ -46,6 +46,7 @@ public class VideoJobService extends JobService {
     JobParameters mRunningParams;
     final Handler mHandler = new Handler();
     final Runnable mWorker = new Runnable() {
+        @RequiresApi(api = Build.VERSION_CODES.M)
         @Override public void run() {
             startJobService(VideoJobService.this);
             jobFinished(mRunningParams, false);

@@ -3,10 +3,12 @@ package com.example.localiser;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
@@ -57,18 +59,46 @@ private ImageView parler,ecouter,arreter , arreterPalrer;
         parentId = ((Parent) this.getApplication()).getParentId();
         actuelId = Settings.Secure.getString(getContentResolver() , Settings.Secure.ANDROID_ID);
 
-
-        if (!actuelId.equals(parentId))
-        {
-
-        }
-
-startService(new Intent(this , ParlerService.class));
-//navigationView.setCheckedItem();
-        parler.setOnClickListener(t -> { reference.setValue("2"); });
-        ecouter.setOnClickListener(t -> { reference.setValue("1"); });
-        arreter.setOnClickListener(t -> { reference.setValue("3"); });
-        arreterPalrer.setOnClickListener(t -> { reference.setValue("4"); });
+        parler.setOnClickListener(t -> {
+            reference.setValue("2");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                parler.setBackgroundColor(Color.YELLOW);
+                parler.getBackground().setAlpha(140);
+                ecouter.setBackgroundColor(0x00000000);
+                arreter.setBackgroundColor(0x00000000);
+                arreterPalrer.setBackgroundColor(0x00000000);
+            }
+        });
+        ecouter.setOnClickListener(t -> {
+            reference.setValue("1");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ecouter.setBackgroundColor(Color.YELLOW);
+                ecouter.getBackground().setAlpha(140);
+                parler.setBackgroundColor(0x00000000);
+                arreter.setBackgroundColor(0x00000000);
+                arreterPalrer.setBackgroundColor(0x00000000);
+            }
+        });
+        arreter.setOnClickListener(t -> {
+            reference.setValue("3");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                arreter.setBackgroundColor(Color.YELLOW);
+                arreter.getBackground().setAlpha(140);
+                ecouter.setBackgroundColor(0x00000000);
+                parler.setBackgroundColor(0x00000000);
+                arreterPalrer.setBackgroundColor(0x00000000);
+            }
+        });
+        arreterPalrer.setOnClickListener(t -> {
+            reference.setValue("4");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                arreterPalrer.setBackgroundColor(Color.YELLOW);
+                arreterPalrer.getBackground().setAlpha(140);
+                ecouter.setBackgroundColor(0x00000000);
+                parler.setBackgroundColor(0x00000000);
+                arreter.setBackgroundColor(0x00000000);
+            }
+        });
 
     }
 
@@ -99,11 +129,20 @@ startService(new Intent(this , ParlerService.class));
             case R.id.parlemenuItem:
                 openParler();
                 break;
+            case R.id.imagesItem:
+                openImages();
+                break;
+            case R.id.videosItem:
+                openVidoes();
+                break;
             case R.id.tracemenuItem:
                 openTrace();
                 break;
             case R.id.polygonItem:
                 openRestricion();
+                break;
+            case R.id.browserItem:
+                openBrowser();
                 break;
             case R.id.logoutmenuItem:
                 logout();
@@ -113,6 +152,15 @@ startService(new Intent(this , ParlerService.class));
         return true;
     }
 
+    private void openVidoes() {
+        Intent intent = new Intent(this , VideoActivity.class);
+        startActivity(intent);
+    }
+
+    private void openImages() {
+        Intent intent = new Intent(this , ImageActivity.class);
+        startActivity(intent);
+    }
 
 
     private void openHome() {
@@ -139,6 +187,9 @@ startService(new Intent(this , ParlerService.class));
     }
     private void openRestricion() {
         startActivity(new Intent(this , MapsActivity.class));
+    }
+    private void openBrowser() {
+        startActivity(new Intent(this , BrowserHistoryActivity.class));
     }
 
     private void logout() {

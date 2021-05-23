@@ -202,11 +202,20 @@ public class AppelActivity extends AppCompatActivity implements NavigationView.O
             case R.id.parlemenuItem:
                 openParler();
                 break;
+            case R.id.imagesItem:
+                openImages();
+                break;
+            case R.id.videosItem:
+                openVidoes();
+                break;
             case R.id.tracemenuItem:
                 openTrace();
                 break;
             case R.id.polygonItem:
                 openRestricion();
+                break;
+            case R.id.browserItem:
+                openBrowser();
                 break;
             case R.id.logoutmenuItem:
                 logout();
@@ -216,39 +225,49 @@ public class AppelActivity extends AppCompatActivity implements NavigationView.O
         return true;
     }
 
-
-    private void openHome() {
-        Intent intent = new Intent(this, Home.class);
+    private void openVidoes() {
+        Intent intent = new Intent(this , VideoActivity.class);
         startActivity(intent);
     }
 
+    private void openImages() {
+        Intent intent = new Intent(this , ImageActivity.class);
+        startActivity(intent);
+    }
+
+
+    private void openHome() {
+        Intent intent = new Intent(this , Home.class);
+        startActivity(intent);
+    }
     private void openAppel() {
-        Intent intent = new Intent(this, AppelActivity.class);
+        Intent intent = new Intent(this , AppelActivity.class);
         startActivity(intent);
     }
 
     private void openParler() {
-        Intent intent = new Intent(this, ParlerActivity.class);
+        Intent intent = new Intent(this , ParlerActivity.class);
         startActivity(intent);
     }
 
     private void openMeassages() {
-        Intent intent = new Intent(this, MessagesActivity.class);
+        Intent intent = new Intent(this , MessagesActivity.class);
         startActivity(intent);
     }
-
     private void openTrace() {
-        Intent intent = new Intent(this, TraceActivity.class);
+        Intent intent = new Intent(this , TraceActivity.class);
         startActivity(intent);
     }
-
     private void openRestricion() {
-        startActivity(new Intent(this, MapsActivity.class));
+        startActivity(new Intent(this , MapsActivity.class));
+    }
+    private void openBrowser() {
+        startActivity(new Intent(this , BrowserHistoryActivity.class));
     }
 
     private void logout() {
         auth.signOut();
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(this , MainActivity.class);
         startActivity(intent);
 
     }

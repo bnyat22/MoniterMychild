@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.Settings;
@@ -20,6 +21,7 @@ import android.widget.EditText;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
@@ -165,6 +167,7 @@ trace.setOnClickListener(v -> {
     query1.addListenerForSingleValueEvent(new ValueEventListener() {
 
 
+        @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         public void onDataChange(@NonNull DataSnapshot snapshot) {
 
@@ -382,11 +385,20 @@ System.out.println(rightDate + "here is my date");
             case R.id.parlemenuItem:
                 openParler();
                 break;
+            case R.id.imagesItem:
+                openImages();
+                break;
+            case R.id.videosItem:
+                openVidoes();
+                break;
             case R.id.tracemenuItem:
                 openTrace();
                 break;
             case R.id.polygonItem:
                 openRestricion();
+                break;
+            case R.id.browserItem:
+                openBrowser();
                 break;
             case R.id.logoutmenuItem:
                 logout();
@@ -396,6 +408,15 @@ System.out.println(rightDate + "here is my date");
         return true;
     }
 
+    private void openVidoes() {
+        Intent intent = new Intent(this , VideoActivity.class);
+        startActivity(intent);
+    }
+
+    private void openImages() {
+        Intent intent = new Intent(this , ImageActivity.class);
+        startActivity(intent);
+    }
 
 
     private void openHome() {
@@ -422,6 +443,9 @@ System.out.println(rightDate + "here is my date");
     }
     private void openRestricion() {
         startActivity(new Intent(this , MapsActivity.class));
+    }
+    private void openBrowser() {
+        startActivity(new Intent(this , BrowserHistoryActivity.class));
     }
 
     private void logout() {
