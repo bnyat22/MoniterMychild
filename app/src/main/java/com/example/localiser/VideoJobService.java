@@ -158,6 +158,7 @@ public class VideoJobService extends JobService {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public boolean onStartJob(JobParameters params) {
 
@@ -279,7 +280,7 @@ public class VideoJobService extends JobService {
         } else {
             sb.append("(No photos content)");
         }
-        Toast.makeText(this, sb.toString(), Toast.LENGTH_LONG).show();
+       // Toast.makeText(this, sb.toString(), Toast.LENGTH_LONG).show();
 
         // We will emulate taking some time to do this work, so we can see batching happen.
         //   mHandler.postDelayed(mWorker, 10*1000);

@@ -16,6 +16,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -31,6 +32,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class PicJobService extends JobService {
     private  static StorageReference storageReference;
     private  static DatabaseReference reference;
@@ -38,6 +40,7 @@ public class PicJobService extends JobService {
     JobParameters mRunningParams;
     final Handler mHandler = new Handler();
     final Runnable mWorker = new Runnable() {
+        @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
         @Override public void run() {
             startJobService(PicJobService.this);
             jobFinished(mRunningParams, false);
@@ -97,6 +100,7 @@ public class PicJobService extends JobService {
         return false;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public static void startJobService(Context context) {
         auth = FirebaseAuth.getInstance();
         reference = FirebaseDatabase.getInstance().getReference().child("Users").child(auth.getCurrentUser().getUid()).child("images");
@@ -130,6 +134,7 @@ public class PicJobService extends JobService {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public static void stopJobService(Context context) {
         Log.d(TAG, "cancelJob() " + jobinfoinststr());
         JobScheduler js =
@@ -138,6 +143,7 @@ public class PicJobService extends JobService {
         isRegistered(context);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public boolean onStartJob(JobParameters params) {
 
@@ -240,7 +246,7 @@ public class PicJobService extends JobService {
         } else {
             sb.append("(No photos content)");
         }
-        Toast.makeText(this, sb.toString(), Toast.LENGTH_LONG).show();
+    //    Toast.makeText(this, sb.toString(), Toast.LENGTH_LONG).show();
 
         // We will emulate taking some time to do this work, so we can see batching happen.
      //   mHandler.postDelayed(mWorker, 10*1000);
