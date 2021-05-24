@@ -112,6 +112,7 @@ ischild.setValue("");
      recorder.setOutputFile(audiofile.getAbsolutePath());
      try {
          recorder.prepare();
+
      } catch (IllegalStateException e) {
          e.printStackTrace();
      } catch (IOException e) {
