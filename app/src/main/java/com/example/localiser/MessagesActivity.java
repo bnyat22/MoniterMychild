@@ -113,9 +113,10 @@ public class MessagesActivity extends AppCompatActivity implements NavigationVie
         });
         listView.setOnItemClickListener((parent, view, position, id) -> {
             MyMessage message = (MyMessage) listView.getItemAtPosition(position);
-            startActivity(new Intent(this,FullMessageActivity.class)
-                    .putExtra("title",message.getTitle())
-                    .putExtra("body",message.getBody()));
+            Intent intent = new Intent(this,FullMessageActivity.class);
+            intent.putExtra("title",message.getTitle());
+            intent.putExtra("body",message.getBody());
+            startActivity(intent);
         });
 
     }

@@ -21,7 +21,7 @@ public class FullAudioActivity extends AppCompatActivity {
 
     TextView playerPosition , playerDuration;
     SeekBar seekBar;
-    ImageView btn_rw, btn_play , btn_ff , btn_pause;
+    ImageView btn_rw, btn_play , btn_ff , btn_pause , back;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +31,7 @@ public class FullAudioActivity extends AppCompatActivity {
         btn_ff = findViewById(R.id.audio_ff);
         btn_play = findViewById(R.id.audio_play);
         btn_pause = findViewById(R.id.audio_pause);
+        back = findViewById(R.id.back_audio);
         playerPosition = findViewById(R.id.player_position);
         playerDuration = findViewById(R.id.player_duration);
         seekBar = findViewById(R.id.seekAudio);
@@ -109,6 +110,10 @@ public class FullAudioActivity extends AppCompatActivity {
             btn_pause.setVisibility(View.GONE);
             btn_play.setVisibility(View.VISIBLE);
             mediaPlayer.seekTo(0);
+        });
+        back.setOnClickListener(v -> {
+            finish();
+            overridePendingTransition(0,0);
         });
 
     }

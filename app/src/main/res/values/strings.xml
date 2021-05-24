@@ -79,5 +79,7 @@
     <string name="navigaruer_tittle">navigateur historique</string>
     <string name="video_title_menu">Videos</string>
     <string name="images_tittle_id">Images</string>
+    <string name="parlerJust">Parler</string>
+    <string name="ecouter">Écouter</string>
 
 </resources>

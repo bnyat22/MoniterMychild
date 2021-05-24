@@ -84,10 +84,11 @@ auth = FirebaseAuth.getInstance();
         //parentId = refAuth.child("deviceId")
         actuelId = Settings.Secure.getString(getContentResolver() , Settings.Secure.ANDROID_ID);
 
-        reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("locations");
+        if (auth.getCurrentUser().getUid() != null) {
+            reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("locations");
 
-        polyLineRef = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("polyline");
-
+            polyLineRef = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("polyline");
+        }
 
 
         //  getLocationUpdate();
@@ -160,6 +161,7 @@ auth = FirebaseAuth.getInstance();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             stopForeground(true);
         }
+
 
     }
 

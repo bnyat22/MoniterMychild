@@ -2,6 +2,7 @@ package com.example.localiser;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Patterns;
@@ -12,6 +13,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.localiser.domains.Parent;
@@ -36,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     Intent homeIntent , map;
     private static final String EMAIL = "";
     private static final String PASSWORD = "";
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,15 +55,21 @@ public class MainActivity extends AppCompatActivity {
             password.setText(savedInstanceState.getString(PASSWORD));
 
         }
+        stopService(new Intent(this, GpsTracker.class));
+        stopService(new Intent(this, SecouerService.class));
+        stopService(new Intent(this, TService.class));
+
+            PicJobService.stopJobService(this);
+            VideoJobService.stopJobService(this);
+            stopService(new Intent(this , PicJobService.class));
+            stopService(new Intent(this , VideoJobService.class));
+        
         homeIntent = new Intent(this, Home.class);
         map = new Intent(this, MapsActivity.class);
         checkLogin();
-        login.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-               // startActivity(homeIntent);
-                userLogin();
-            }
+        login.setOnClickListener(v -> {
+           // startActivity(homeIntent);
+            userLogin();
         });
         Intent regIntent = new Intent(this, Registration.class);
         register.setOnClickListener(new View.OnClickListener() {
@@ -94,6 +103,8 @@ public class MainActivity extends AppCompatActivity {
         /*    else
                 startActivity(map);*/
 
+        } else {
+            auth.signOut();
         }
     }
 

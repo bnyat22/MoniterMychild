@@ -3,8 +3,20 @@
     xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
     android:background="@color/blue_800">
+    <ImageView
+        android:id="@+id/back_audio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
+        android:src="@drawable/ic_arrow_back_white_24dp"/>
+    <LinearLayout
+        android:paddingTop="200dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical">
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="200dp"
@@ -63,5 +75,5 @@
             android:id="@+id/audio_ff"
             android:src="@drawable/exo_controls_fastforward"/>
     </LinearLayout>
-
+    </LinearLayout>
 </LinearLayout>

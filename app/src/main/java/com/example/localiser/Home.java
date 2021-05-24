@@ -26,6 +26,7 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.DrawableRes;
@@ -326,7 +327,7 @@ onReadChanges();
 
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 18.0f));
                 } else {
-                    myMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(43.6368272,3.846629)).title("Marker in Montpellier"));
+                    myMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(43.6368272,3.846629)).title("Marker in Montpellier").icon(bitmapDescriptorFromVector(Home.this,R.drawable.ic_enfant_icon)));
                 }
 
             }
@@ -745,9 +746,16 @@ System.out.println("waxt  " + from);
 
     private void logout() {
         auth.signOut();
+
         Intent intent = new Intent(this , MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
+        //auth.removeIdTokenListener(auth.getAccessToken(true));
+
+
 
     }
-}
+        }
+
+
 
