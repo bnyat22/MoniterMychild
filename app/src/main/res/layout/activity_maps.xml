@@ -92,8 +92,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="5dp"
                     android:max="255"
-                    android:progressTint="#FFEDED7F"
-                    android:thumbTint="#EDED7F" />
+                    android:progressTint="@color/blue_800"
+                    android:thumbTint="@color/blue_800" />
 
                 <androidx.appcompat.widget.AppCompatSeekBar
                     android:id="@+id/seekGreen"

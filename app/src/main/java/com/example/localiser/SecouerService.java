@@ -59,7 +59,7 @@ public class SecouerService extends Service implements SensorEventListener {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
      dangereux = new NotificationCompat.Builder(this , "16")
                 .setSmallIcon(R.drawable.ic_baseline_add_alert_24)
-                .setContentTitle("Attention")
+                .setContentTitle("Au secours")
                 .setContentText("Je suis en danger")
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
         notificationManagerCompat = NotificationManagerCompat.from(this);

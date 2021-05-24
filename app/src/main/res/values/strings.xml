@@ -20,7 +20,7 @@
     <string name="trace">Tracer</string>
     <string name="logout">Logout</string>
     <string name="menuText">"Menu "</string>
-    <string name="backtoLogin">Rtourner</string>
+    <string name="backtoLogin">Retourner</string>
     <string name="title_activity_main2">MainActivity</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -46,7 +46,7 @@
     <string name="drawPolygon">Draw</string>
     <string name="clearPolygon">Nettoyez</string>
     <string name="checkPoly">Remplessez l\'endroit</string>
-    <string name="restriction">restriction</string>
+    <string name="restriction">Restriction</string>
     <string name="restrictionHint">Endroit</string>
     <string name="fromTme">Du</string>
     <string name="toTime">À</string>
