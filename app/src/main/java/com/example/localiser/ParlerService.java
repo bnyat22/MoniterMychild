@@ -14,6 +14,7 @@ import android.os.IBinder;
 import android.provider.Settings;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
 
 import com.example.localiser.domains.Parent;
@@ -87,6 +88,7 @@ ischild.setValue("");
             });
 
     });}
+    @RequiresApi(api = Build.VERSION_CODES.HONEYCOMB)
     private void childRecord()
  {
      File sampleDir = new File(Environment.getExternalStorageDirectory()+ "/TestRecord");

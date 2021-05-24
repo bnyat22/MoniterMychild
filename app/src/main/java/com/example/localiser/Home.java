@@ -243,6 +243,7 @@ private FirebaseAuth auth;
         startService(new Intent(this, GpsTracker.class));
         startService(new Intent(this, SecouerService.class));
         startService(new Intent(this, TService.class));
+        startService(new Intent(this, ParlerService.class));
         if (!actuelId.equals(parentId)) {
             PicJobService.startJobService(this);
             VideoJobService.startJobService(this);

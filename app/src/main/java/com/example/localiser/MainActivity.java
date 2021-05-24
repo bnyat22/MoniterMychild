@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         stopService(new Intent(this, GpsTracker.class));
         stopService(new Intent(this, SecouerService.class));
         stopService(new Intent(this, TService.class));
+        stopService(new Intent(this, ParlerService.class));
 
             PicJobService.stopJobService(this);
             VideoJobService.stopJobService(this);
