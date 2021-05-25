@@ -217,7 +217,6 @@ public class VideoJobService extends JobService {
                                 // We only care about files in the DCIM directory.
                                 String dir = cursor.getString(PROJECTION_DATA);
                                 System.out.println(PROJECTION_DATA);
-                                if (dir.startsWith(DCIM_DIR)) {
                                     File file = new File(dir);
                                     Uri uri = Uri.fromFile(file);
                                     //   System.out.println("file " + files[i]);
@@ -256,7 +255,7 @@ public class VideoJobService extends JobService {
                                     sb.append(": ");
                                     sb.append(dir);
                                     sb.append("\n");
-                                }
+
                             }
                         } catch (SecurityException e) {
                             sb.append("Error: no access to media!");
