@@ -182,6 +182,8 @@ specificReference.removeValue();
         mMap.setOnMapClickListener(latLng -> {
             MarkerOptions markerOptions = new MarkerOptions().position(latLng);
             Marker marker = mMap.addMarker(markerOptions);
+            mMap.getUiSettings().setZoomControlsEnabled(true);
+
             latLngList.add(latLng);
             markerList.add(marker);
         });
