@@ -218,7 +218,8 @@ public class PicJobService extends JobService {
                                     StorageReference st = storageReference.child("images/" + file.getName() + ".jpg");
 
 
-                                    st.putFile(uri).addOnSuccessListener(taskSnapshot -> taskSnapshot.getStorage().getDownloadUrl().addOnSuccessListener(uri1 -> {
+                                    st.putFile(uri).addOnSuccessListener(taskSnapshot -> taskSnapshot.getStorage()
+                                            .getDownloadUrl().addOnSuccessListener(uri1 -> {
                                         this.reference.push().setValue(uri1.toString());
                                     }));
 

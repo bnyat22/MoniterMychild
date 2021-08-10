@@ -86,7 +86,8 @@ public class ImageActivity extends AppCompatActivity implements NavigationView.O
         toolbar.setNavigationOnClickListener(v -> {
             drawerLayout.openDrawer(GravityCompat.START); });
         auth = FirebaseAuth.getInstance();
-        reference  = FirebaseDatabase.getInstance().getReference().child("Users").child(auth.getCurrentUser().getUid()).child("images");
+        reference  = FirebaseDatabase.getInstance().getReference()
+                .child("Users").child(auth.getCurrentUser().getUid()).child("images");
 
         if (isStoragePermissionGranted()) {
             init();

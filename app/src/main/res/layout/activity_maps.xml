@@ -65,13 +65,26 @@
         android:text="@string/checkPoly"
         android:textColor="@color/white"
         android:layout_marginTop="10dp"/>
-    <CheckBox
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/specificEndroidCheck"
-        android:text="@string/checkspecific"
-        android:textColor="@color/white"
-        />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <CheckBox
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/specificEndroidCheck"
+                        android:text="@string/checkspecific"
+                        android:textColor="@color/white"
+                        android:layout_marginRight="10dp"/>
+                    <CheckBox
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/ecolecheck"
+                        android:text="@string/ecolecheckbox"
+                        android:textColor="@color/white"
+                       />
+                </LinearLayout>
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

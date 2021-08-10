@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -20,13 +21,20 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.DrawableRes;
@@ -34,6 +42,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
@@ -69,15 +78,22 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.EventListener;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 @RequiresApi(api = Build.VERSION_CODES.Q)
 public class Home extends FragmentActivity implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
@@ -99,17 +115,26 @@ private FirebaseAuth auth;
     NotificationCompat.Builder manqueEnfant;
     NotificationManagerCompat notificationManagerCompat;
 
+
    //map elements
+    private ListView listViewSearch;
+    private Spinner dropdown;
+    private ArrayAdapter<String> adapterSearch;
+    private List<String> listChild;
     private GoogleMap mMap;
     private LocationManager manager;
     private final int MIN_TIME = 1000; //une seconde
     private final int MIN_DIS = 1; //un mêtre
     private Marker myMarker;
+    TextView textView;
+    private Map<String,Marker> markers;
     private static final  int REQUEST_CODE_PERMISSION =2;
     String mPermission = android.Manifest.permission.ACCESS_FINE_LOCATION;
     String cPermission = Manifest.permission.ACCESS_COARSE_LOCATION;
     String bPermission = Manifest.permission.ACCESS_BACKGROUND_LOCATION;
    private LatLng startLatlng;
+   private String childName;
+    String[] listnames= {"dilan" , "darvin"};
 
     @SuppressLint("HardwareIds")
     @Override
@@ -123,10 +148,54 @@ private FirebaseAuth auth;
         navigationView.setNavigationItemSelectedListener(this);
         toolbar.setNavigationOnClickListener(v -> {
             drawerLayout.openDrawer(GravityCompat.START); });
+        dropdown = findViewById(R.id.spinner_search);
+        listChild = new ArrayList<>();
+
+
+
+        adapterSearch = new ArrayAdapter<>(this ,android.R.layout.simple_list_item_1 ,listnames);
+      //  listViewSearch.setAdapter(adapterSearch);
+
+
+        dropdown.setAdapter(adapterSearch);
+        dropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                reference.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot ds:snapshot.getChildren())
+                        {
+                            if(ds.getKey().equals(listChild.get(position)))
+                            {
+                                MyLocation location = ds.child("locations").getValue(MyLocation.class);
+                                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(),
+                                        location.getLongitude()), 18.0f));
+
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+
 
 
         //notifications
         createNotificationChannel();
+        childName = ((Parent) this.getApplication()).getChildName();
         Intent intent = new Intent(this, ParlerActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
@@ -157,6 +226,7 @@ private FirebaseAuth auth;
         .setPriority(NotificationCompat.PRIORITY_HIGH);
          notificationManagerCompat = NotificationManagerCompat.from(this);
 
+         markers = new HashMap<>();
         //getting permissions
         try{
             if (ActivityCompat.checkSelfPermission(this,mPermission)!= PackageManager.PERMISSION_GRANTED &&
@@ -187,9 +257,7 @@ private FirebaseAuth auth;
         }catch (Exception e){
             e.printStackTrace();
         }
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECEIVE_SMS},230);
-        }
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
                 != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED &&
@@ -198,26 +266,6 @@ private FirebaseAuth auth;
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.PROCESS_OUTGOING_CALLS, Manifest.permission.READ_PHONE_STATE,Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     1);
-
-        }
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 3);
-
-        }
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 5);
-
-        }
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 4);
-
-        }
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.MANAGE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.MANAGE_EXTERNAL_STORAGE}, 6);
 
         }
 
@@ -231,10 +279,22 @@ private FirebaseAuth auth;
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         actuelId = Settings.Secure.getString(getContentResolver() , Settings.Secure.ANDROID_ID);
-        reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("locations");
-        polygonRef = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("polygons");
-        specificRef = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("specific");
+        if (actuelId.equals(parentId)) {
+            reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                    .child("children");
+            polygonRef = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                    .child("children");
+            specificRef = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                    .child("children");
+        }else {
 
+            reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                    .child("children").child(childName).child("locations");
+            polygonRef = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                    .child("children").child(childName).child("polygons");
+            specificRef = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                    .child("children").child(childName).child("specific");
+        }
 
 
         //   getLocationGpsTracker();
@@ -276,14 +336,25 @@ onReadChanges();
                 MyLocation location;
                 if (snapshot.exists()) {
                     try {
-                        location = snapshot.getValue(MyLocation.class);
-                        System.out.println("erukana" + location.getLatitude());
+                        if (actuelId.equals(parentId))
+                        {
+                            for (DataSnapshot ds:snapshot.getChildren())
+                            {
+                                location = ds.child("locations").getValue(MyLocation.class);
+                                System.out.println("erukana" + ds.getKey()+ location.getLatitude());
+                                markers.get(ds.getKey()).setPosition(new LatLng(location.getLatitude() , location.getLongitude()));
+                            }
+                        }
+                        else {
+                            location = snapshot.getValue(MyLocation.class);
+                            System.out.println("erukana" + location.getLatitude());
 
 
-                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 18.0f));
+                            //  mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 18.0f));
 
 
-                        myMarker.setPosition(new LatLng(location.getLatitude() , location.getLongitude()));
+                            myMarker.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
+                        }
                     } catch (Exception e)
                     {
                       //  Toast.makeText(Home.this , "7aji", Toast.LENGTH_LONG).show();
@@ -321,12 +392,56 @@ onReadChanges();
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 MyLocation location;
                 if (snapshot.exists()) {
-                    location = snapshot.getValue(MyLocation.class);
-                    System.out.println("e bram da wara era " + location.getLatitude());
-                    startLatlng = new LatLng(location.getLatitude(), location.getLongitude());
-                    myMarker = mMap.addMarker(new MarkerOptions().position(startLatlng).icon(bitmapDescriptorFromVector(Home.this,R.drawable.ic_enfant_icon)));
+                    if (actuelId.equals(parentId)) {
+                        for (DataSnapshot ds: snapshot.getChildren()) {
+                            listChild.add(ds.getKey());
+                            location = ds.child("locations").getValue(MyLocation.class);
+                            startLatlng = new LatLng(location.getLatitude(), location.getLongitude());
+                            Marker  marker = null;
+                            try {
+                                System.out.println("du naby dli " + ds.child("picture").getValue());
+                                URL url = new URL(ds.child("picture").getValue().toString());
+                                Bitmap bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());
 
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 18.0f));
+                                marker = mMap.addMarker(new MarkerOptions().position(startLatlng)
+
+                                          .icon(BitmapDescriptorFactory.fromBitmap(bmp)));
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            markers.put(ds.getKey(),marker);
+
+
+                            Query query = polygonRef.child(ds.getKey()).child("polygons");
+                            Query specifiQuery = specificRef.child(ds.getKey()).child("specific");
+                            queryNormalPolygon(query);
+                            querySpecific(specifiQuery);
+                        }
+                    } else {
+                        String name = ((Parent) Home.this.getApplication()).getChildName();
+                        adapterSearch.add(name);
+                        location = snapshot.getValue(MyLocation.class);
+                        startLatlng = new LatLng(location.getLatitude(), location.getLongitude());
+                        try {
+
+                            URL url = new URL(snapshot.child("picture").getValue().toString());
+                            Bitmap bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());
+
+                            myMarker = mMap.addMarker(new MarkerOptions().position(startLatlng)
+                                    .icon(BitmapDescriptorFactory.fromBitmap(bmp)));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        Query query = polygonRef;
+                        Query specifiQuery = specificRef;
+                        queryNormalPolygon(query);
+                        querySpecific(specifiQuery);
+                           mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 18.0f));
+                    }
+
+
+
+                //    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 18.0f));
                 } else {
                     myMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(43.6368272,3.846629)).title("Marker in Montpellier").icon(bitmapDescriptorFromVector(Home.this,R.drawable.ic_enfant_icon)));
                 }
@@ -342,10 +457,8 @@ onReadChanges();
            mMap.getUiSettings().setAllGesturesEnabled(true);
            mMap.getUiSettings().setZoomControlsEnabled(true);
 
-        Query query = polygonRef;
-        Query specifiQuery = specificRef;
-       queryNormalPolygon(query);
-        querySpecific(specifiQuery);
+
+
 
     //   mMap.moveCamera(CameraUpdateFactory.newLatLng(startLatlng));
     }
@@ -383,24 +496,33 @@ onReadChanges();
             public void onDataChange(DataSnapshot dataSnapshot) {
 
 
-                for(DataSnapshot ds : dataSnapshot.getChildren()) {
-                    Polygon polygon;
-                    //get latitute and longitude
-                    PolygonOptions polygonOptions = new PolygonOptions();
-                    List<Object> points = (List<Object>) ds.child("polygon").child("points").getValue();
-                    for (int i = 0; i < points.size(); i++) {
-                        HashMap<String, Double> data = (HashMap<String, Double>) points.get(i);
-                        double latitude = data.get("latitude");
-                        double longitude = data.get("longitude");
-                        LatLng latLng = new LatLng(latitude , longitude);
-                        polygonOptions.add(latLng);
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot ds : dataSnapshot.getChildren()) {
+                        for (DataSnapshot dt : ds.getChildren()) {
+                            Polygon polygon;
+                            //get latitute and longitude
+                            PolygonOptions polygonOptions = new PolygonOptions();
+                            List<Object> points = (List<Object>) dt.child("polygon").child("points").getValue();
+                            for (int i = 0; i < points.size(); i++) {
+                                HashMap<String, Double> data = (HashMap<String, Double>) points.get(i);
+                                double latitude = data.get("latitude");
+                                double longitude = data.get("longitude");
+                                LatLng latLng = new LatLng(latitude, longitude);
+                                polygonOptions.add(latLng);
+                            }
+                            polygon = mMap.addPolygon(polygonOptions);
+                            polygon.setFillColor(dt.child("polygon").child("fillColor").getValue(Integer.class));
+                            polygon.setStrokeColor(dt.child("polygon").child("strokeColor").getValue(Integer.class));
+
+                            String day = LocalDate.now().getDayOfWeek().name();
+
+
+                            String from = dt.child(day).getValue(String.class);
+                            String to = dt.child(day).getValue(String.class);
+                            if (!from.equals("du"))
+                                specificDataChange(polygon, from, to);
+                        }
                     }
-                    polygon =    mMap.addPolygon(polygonOptions);
-                    polygon.setFillColor(ds.child("polygon").child("fillColor").getValue(Integer.class));
-                    polygon.setStrokeColor(ds.child("polygon").child("strokeColor").getValue(Integer.class));
-                    String from = ds.child("from").getValue(String.class);
-                    String to = ds.child("to").getValue(String.class);
-                    specificDataChange(polygon , from ,to);
                 }
             }
 
@@ -411,41 +533,47 @@ onReadChanges();
         };
         query.addListenerForSingleValueEvent(queryValueListener);
     }
-    private void queryNormalPolygon(Query query)
-    {
+    private void queryNormalPolygon(Query query) {
         ValueEventListener queryValueListener = new ValueEventListener() {
 
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot ds : dataSnapshot.getChildren()) {
+
+                        System.out.println("aske " + ds.getKey());
+                        Polygon polygon;
 
 
-                for(DataSnapshot ds : dataSnapshot.getChildren()) {
-                    Polygon polygon;
-                    //get latitute and longitude
-                    PolygonOptions polygonOptions = new PolygonOptions();
-                    List<Object> points = (List<Object>) ds.child("points").getValue();
-                    for (int i = 0; i < points.size(); i++) {
-                        HashMap<String, Double> data = (HashMap<String, Double>) points.get(i);
-                        double latitude = data.get("latitude");
-                        double longitude = data.get("longitude");
-                        LatLng latLng = new LatLng(latitude , longitude);
-                        polygonOptions.add(latLng);
+                        polygon = getPolygon(ds);
+                        referenceDataChange(polygon);
+
+                    /*else
+                    {
+                        for (DataSnapshot dt : ds.getChildren()){
+                            System.out.println("asky " + dt.getKey());
+                            polygon = getPolygon(dt);
+                            referenceDataChange(polygon);
+                        }
+                    }*/
+
                     }
-                    polygon =    mMap.addPolygon(polygonOptions);
-                    polygon.setFillColor(ds.child("fillColor").getValue(Integer.class));
-                    polygon.setStrokeColor(ds.child("strokeColor").getValue(Integer.class));
 
-                    referenceDataChange(polygon);
+
+
 
                 }
-            }
 
+
+            }
             @Override
-            public void onCancelled(DatabaseError databaseError) {
+            public void onCancelled (DatabaseError databaseError){
 
             }
+
         };
         query.addListenerForSingleValueEvent(queryValueListener);
+
     }
     private void specificDataChange(Polygon polygon , String from, String to)
     {
@@ -454,32 +582,13 @@ onReadChanges();
 
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                MyLocation location;
-
                 if (snapshot.exists()) {
                     try {
-
-                        location = snapshot.getValue(MyLocation.class);
-                        LatLng latLng= new LatLng(location.getLatitude() , location.getLongitude());
-                        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                            builder.include(latLng);
-                        final LatLngBounds bounds = builder.build();
-
-                        //BOUND_PADDING is an int to specify padding of bound.. try 100.
-                        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds,100);
-                        mMap.animateCamera(cu);
-                        System.out.println("rasta ");
-                        System.out.println("rasta p" + pointInPolygon(latLng, polygon));
-
-                        if (pointInPolygon(latLng , polygon) && isTimeBetween(from , to))
-                            System.out.println("laweya");
-                        else if (pointInPolygon(latLng , polygon) && !isTimeBetween(from , to))
-                            System.out.println("laweya");
-                        else if (!pointInPolygon(latLng , polygon) && isTimeBetween(from , to)) {
-                            if(actuelId.equals(parentId))
-                            notificationManagerCompat.notify(2, manque.build());
-                            else
-                                notificationManagerCompat.notify(2, manqueEnfant.build());
+                        if (actuelId.equals(parentId)) {
+                            for (DataSnapshot ds:snapshot.getChildren())
+                            checkSpecifiquePolygon(ds,polygon,from,to);
+                        } else {
+                            checkSpecifiquePolygon(snapshot,polygon,from,to);
                         }
 
                     } catch (Exception e)
@@ -632,7 +741,53 @@ System.out.println("waxt  " + from);
     }
 
 
+    private void checkSpecifiquePolygon(DataSnapshot snapshot
+            ,Polygon polygon , String from ,String to)
+    {
 
+
+      MyLocation  location = snapshot.getValue(MyLocation.class);
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        builder.include(latLng);
+        final LatLngBounds bounds = builder.build();
+
+        //BOUND_PADDING is an int to specify padding of bound.. try 100.
+        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 100);
+        mMap.animateCamera(cu);
+        System.out.println("rasta ");
+        System.out.println("rasta p" + pointInPolygon(latLng, polygon));
+
+        if (pointInPolygon(latLng, polygon) && isTimeBetween(from, to))
+            System.out.println("laweya");
+        else if (pointInPolygon(latLng, polygon) && !isTimeBetween(from, to))
+            System.out.println("laweya");
+        else if (!pointInPolygon(latLng, polygon) && isTimeBetween(from, to)) {
+            if (actuelId.equals(parentId))
+                notificationManagerCompat.notify(2, manque.build());
+            else
+                notificationManagerCompat.notify(2, manqueEnfant.build());
+        }
+    }
+
+   private Polygon getPolygon(DataSnapshot ds){
+
+       //get latitute and longitude
+       Polygon polygon;
+       PolygonOptions polygonOptions = new PolygonOptions();
+       List<Object> points = (List<Object>) ds.child("points").getValue();
+       for (int i = 0; i < points.size(); i++) {
+           HashMap<String, Double> data = (HashMap<String, Double>) points.get(i);
+           double latitude = data.get("latitude");
+           double longitude = data.get("longitude");
+           LatLng latLng = new LatLng(latitude , longitude);
+           polygonOptions.add(latLng);
+       }
+       polygon =    mMap.addPolygon(polygonOptions);
+       polygon.setFillColor(ds.child("fillColor").getValue(Integer.class));
+       polygon.setStrokeColor(ds.child("strokeColor").getValue(Integer.class));
+       return polygon;
+    }
 
     private void createNotificationChannel() {
 
@@ -656,6 +811,15 @@ System.out.println("waxt  " + from);
        // Bitmap smallMarker = Bitmap.createScaledBitmap(bitmap, 50, 50, false);
         Canvas canvas = new Canvas(bitmap);
         vectorDrawable.draw(canvas);
+        return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+    private BitmapDescriptor bitmapDescriptorFromVector(String vectorResId) throws IOException {
+
+        Uri imageUri = Uri.parse(vectorResId);
+        Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+
+
+        bitmap.prepareToDraw();
         return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
 

@@ -63,6 +63,7 @@ public class GpsTracker extends Service {
     private FirebaseAuth auth;
     private String actuelId;
     private String parentId;
+    private String childName;
 
 
 
@@ -81,13 +82,19 @@ auth = FirebaseAuth.getInstance();
         System.out.println("xo deya era bram?");
         database = FirebaseDatabase.getInstance();
         parentId = ((Parent) this.getApplication()).getParentId();
+        childName = ((Parent) this.getApplication()).getChildName();
         //parentId = refAuth.child("deviceId")
         actuelId = Settings.Secure.getString(getContentResolver() , Settings.Secure.ANDROID_ID);
 
         if (auth.getCurrentUser().getUid() != null) {
-            reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("locations");
+            if (!parentId.equals(actuelId)) {
+                reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                        .child("children").child(childName).child("locations");
 
-            polyLineRef = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("polyline");
+                polyLineRef = database.getReference().child("Users")
+                        .child(auth.getCurrentUser().getUid())
+                        .child("children").child(childName).child("polyline");
+            }
         }
 
 
@@ -116,7 +123,8 @@ auth = FirebaseAuth.getInstance();
                 System.out.println("ddeya era bram?");
                 reference.setValue(locationResult.getLastLocation());
 
-                @SuppressLint("SimpleDateFormat") String timeStamp = new SimpleDateFormat("dd-MM-yyyy_HH:mm").format(Calendar.getInstance().getTime());
+                @SuppressLint("SimpleDateFormat") String timeStamp = new SimpleDateFormat("dd-MM-yyyy_HH:mm")
+                        .format(Calendar.getInstance().getTime());
                 String[] dates = timeStamp.split("_");
                 polyLineRef.child(dates[0]).child(dates[1]).setValue(locationResult.getLastLocation());
             }

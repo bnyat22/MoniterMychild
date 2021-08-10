@@ -81,5 +81,6 @@
     <string name="images_tittle_id">Images</string>
     <string name="parlerJust">Parler</string>
     <string name="ecouter">Écouter</string>
+    <string name="ecolecheckbox">École</string>
 
 </resources>

@@ -9,6 +9,8 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TimePicker;
 
+import com.example.localiser.PopUpActivity;
+
 import java.util.Calendar;
 import java.util.TimeZone;
 
@@ -21,9 +23,18 @@ public class MyEditTextHourPicker  implements View.OnClickListener, TimePickerDi
     public MyEditTextHourPicker(Context context, int editTextViewID)
     {
         Activity act = (Activity)context;
+
         this._editText = act.findViewById(editTextViewID);
         this._editText.setOnClickListener(this);
         this._context = context;
+    }
+    public MyEditTextHourPicker(PopUpActivity activity,Context context, int editTextViewID)
+    {
+
+
+        this._editText = activity.findViewById(editTextViewID);
+        this._editText.setOnClickListener(this);
+        this._context =  context;
     }
 
 

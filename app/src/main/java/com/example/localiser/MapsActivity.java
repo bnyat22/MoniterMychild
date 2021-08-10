@@ -29,6 +29,7 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentActivity;
 
+import com.example.localiser.domains.MyEditTextHourPicker;
 import com.example.localiser.domains.MyLocation;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -77,6 +78,12 @@ public class MapsActivity extends FragmentActivity implements NavigationView.OnN
     private GoogleMap mMap;
     private LocationManager manager;
     private Marker myMarker;
+
+    //popup elements
+
+    PopUpActivity pop;
+
+
     @SuppressLint("HardwareIds")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -92,13 +99,17 @@ public class MapsActivity extends FragmentActivity implements NavigationView.OnN
         from = findViewById(R.id.fromTime);
         to = findViewById(R.id.toTime);
 
+
+
+
         polygonCheckbox = findViewById(R.id.checkPoly);
         endroitCheckBox = findViewById(R.id.specificEndroidCheck);
         endroitCheckBox.setOnCheckedChangeListener(((buttonView, isChecked) -> {
             if (isChecked) {
-                endroitText.setVisibility(View.VISIBLE);
-                from.setVisibility(View.VISIBLE);
-                to.setVisibility(View.VISIBLE);
+                 pop = new PopUpActivity(MapsActivity.this);
+                pop.show();
+
+
             }
         }));
         polygonCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -114,25 +125,10 @@ public class MapsActivity extends FragmentActivity implements NavigationView.OnN
             }
         });
         draw.setOnClickListener(v -> {
-            String text = endroitText.getText().toString();
-            String fromText = from.getText().toString();
-            String toText = to.getText().toString();
-
             if (endroitCheckBox.isChecked())
             {
-            if (!text.equals("") && !fromText.equals("") && !toText.equals(""))
-            {
-                if (polygon != null) polygon.remove();
-                PolygonOptions polygonOptions = new PolygonOptions().addAll(latLngList).clickable(true);
-                polygon = mMap.addPolygon(polygonOptions);
-
-                polygon.setStrokeColor(Color.rgb(red , green , blue));
-                if (polygonCheckbox.isChecked()) polygon.setFillColor(Color.rgb(red, green , blue));
-                specificReference.child(text).child("polygon").setValue(polygon);
-                specificReference.child(text).child("from").setValue(fromText);
-                specificReference.child(text).child("to").setValue(toText);
-
-            }} else {
+             putWeekHours();
+                } else {
                 if (polygon != null) polygon.remove();
                 PolygonOptions polygonOptions = new PolygonOptions().addAll(latLngList).clickable(true);
                 polygon = mMap.addPolygon(polygonOptions);
@@ -142,9 +138,8 @@ public class MapsActivity extends FragmentActivity implements NavigationView.OnN
                 reference.push().setValue(polygon);
             } });
         clear.setOnClickListener(v -> {
-reference.removeValue();
-specificReference.removeValue();
-
+            reference.removeValue();
+            specificReference.removeValue();
         });
         redSeek.setOnSeekBarChangeListener( this);
         greenSeek.setOnSeekBarChangeListener(this);
@@ -157,12 +152,9 @@ specificReference.removeValue();
         navigationView.setNavigationItemSelectedListener(this);
         toolbar.setNavigationOnClickListener(v -> {
             drawerLayout.openDrawer(GravityCompat.START); });
-
-
 //initialiser firebase elements
         auth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance();
-
         reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("polygons");
         specificReference = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("specific");
 
@@ -187,7 +179,72 @@ specificReference.removeValue();
             latLngList.add(latLng);
             markerList.add(marker);
         });
-        //    mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+
+    }
+
+    private void putWeekHours()
+    {
+        String text = pop.getNom().getText().toString();
+        if (polygon != null) polygon.remove();
+        PolygonOptions polygonOptions = new PolygonOptions().addAll(latLngList).clickable(true);
+        polygon = mMap.addPolygon(polygonOptions);
+
+        polygon.setStrokeColor(Color.rgb(red , green , blue));
+        if (polygonCheckbox.isChecked()) polygon.setFillColor(Color.rgb(red, green , blue));
+        specificReference.child(text).child("polygon").setValue(polygon);
+        if (!pop.getDuLundi().getText().equals("")) {
+            specificReference.child(text).child("MONDAY").child("du").setValue(pop.getDuLundi().getText());
+            specificReference.child(text).child("MONDAY").child("a").setValue(pop.getaLundi().getText());
+        } else {
+            specificReference.child(text).child("MONDAY").child("du").setValue("nn");
+            specificReference.child(text).child("MONDAY").child("a").setValue("nn");
+        }
+        if (!pop.getDuMardi().getText().equals("")) {
+            specificReference.child(text).child("TUESDAY").child("du").setValue(pop.getDuMardi().getText());
+            specificReference.child(text).child("TUESDAY").child("a").setValue(pop.getaMardi().getText());
+        }  else {
+            specificReference.child(text).child("TUESDAY").child("du").setValue("nn");
+            specificReference.child(text).child("TUESDAY").child("a").setValue("nn");
+        }
+        if (!pop.getaMercredi().getText().equals("")) {
+            specificReference.child(text).child("WEDNESDAY").child("du").setValue(pop.getDuMercredi().getText());
+            specificReference.child(text).child("WEDNESDAY").child("a").setValue(pop.getaMercredi().getText());
+        }  else {
+            specificReference.child(text).child("WEDNESDAY").child("du").setValue("nn");
+            specificReference.child(text).child("WEDNESDAY").child("a").setValue("nn");
+        }
+        if (!pop.getDuJeudi().getText().equals("")) {
+            specificReference.child(text).child("THURSDAY").child("du").setValue(pop.getDuJeudi().getText());
+            specificReference.child(text).child("THURSDAY").child("a").setValue(pop.getaJeudi().getText());
+        }  else {
+            specificReference.child(text).child("THURSDAY").child("du").setValue("nn");
+            specificReference.child(text).child("THURSDAY").child("a").setValue("nn");
+        }
+        if (!pop.getDuVendredi().getText().equals("")) {
+            specificReference.child(text).child("FRIDAY").child("du").setValue(pop.getDuVendredi().getText());
+            specificReference.child(text).child("FRIDAY").child("a").setValue(pop.getaVendredi().getText());
+        }  else {
+            specificReference.child(text).child("FRIDAY").child("du").setValue("nn");
+            specificReference.child(text).child("FRIDAY").child("a").setValue("nn");
+        }
+        if (!pop.getDuSamedi().getText().equals("")) {
+            specificReference.child(text).child("SATURDAY").child("du").setValue(pop.getDuSamedi().getText());
+            specificReference.child(text).child("SATURDAY").child("a").setValue(pop.getaSamedi().getText());
+        }  else {
+            specificReference.child(text).child("SATURDAY").child("du").setValue("nn");
+            specificReference.child(text).child("SATURDAY").child("a").setValue("nn");
+        }
+        if (!pop.getDuSamedi().getText().equals("")) {
+            specificReference.child(text).child("SUNDAY").child("du").setValue(pop.getDuDimanche().getText());
+            specificReference.child(text).child("SUNDAY").child("a").setValue(pop.getaDimanche().getText());
+        }  else {
+            specificReference.child(text).child("SUNDAY").child("du").setValue("nn");
+            specificReference.child(text).child("SUNDAY").child("a").setValue("nn");
+        }
+
+
+
+
     }
 
     @Override
@@ -325,5 +382,5 @@ specificReference.removeValue();
         startActivity(intent);
 
     }
-}
 
+}

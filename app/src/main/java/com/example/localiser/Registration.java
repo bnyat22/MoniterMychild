@@ -19,6 +19,7 @@ import com.example.localiser.domains.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class Registration extends AppCompatActivity {
@@ -26,6 +27,7 @@ public class Registration extends AppCompatActivity {
     private Button incription , retour;
     private EditText nom , prenom , email , password;
     private FirebaseAuth mAuth;
+    private DatabaseReference reference;
     private String deviceId;
 
 
@@ -47,6 +49,7 @@ public class Registration extends AppCompatActivity {
             startActivity(intent);
         });
         mAuth = FirebaseAuth.getInstance();
+        reference = FirebaseDatabase.getInstance().getReference().child("Users");
         incription.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -57,21 +60,11 @@ public class Registration extends AppCompatActivity {
 
     }
 
-   /* @Override
-    public void onClick(View v) {
-        switch(v.getId())
-        {
-            case R.id.backLog:
-                startActivity(new Intent(this , MainActivity.class));
-                break;
-            case R.id.inscBut:
-                registerUser();
-                break;
-        }
-    }*/
+
 
     @SuppressLint("HardwareIds")
     private void registerUser() {
+        reference.setValue("hey");
         String email = this.email.getText().toString().trim();
         String nom = this.nom.getText().toString().trim();
         String prenom = this.prenom.getText().toString().trim();
@@ -112,27 +105,32 @@ return;
         mAuth.createUserWithEmailAndPassword(email , password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
+                        System.out.println("shaw");
                        deviceId = Settings.Secure.getString(this.getContentResolver(),
                                 Settings.Secure.ANDROID_ID);
                         User user = new User(nom, prenom, email, password);
-                        FirebaseDatabase.getInstance().getReference("Users")
+                        reference
                                 .child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("userDetails")
-                                .setValue(user).addOnCompleteListener(new OnCompleteListener<Void>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Void> task) {
-                                if (task.isSuccessful())
-                                {
-                                    FirebaseDatabase.getInstance().getReference().child("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).
-                                            child("deviceId").setValue(deviceId);
-                                    ((Parent) Registration.this.getApplication()).setParentId(deviceId);
-                                    Toast.makeText(Registration.this,"Vous êtes enregistré!" , Toast.LENGTH_LONG).show();
-                                    startActivity(new Intent(Registration.this , MainActivity.class));
-                                } else
-                                {
-                                    Toast.makeText(Registration.this , "Le démarche n'est pas réussi veuillez essayer encore" , Toast.LENGTH_LONG).show();
-                                }
-                            }
-                        });
+                                .setValue(user);
+                        System.out.println("naroto");
+                        reference.setValue("heyo");
+                        reference
+                                .child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("userDetails")
+                                .setValue(user).addOnCompleteListener(task1 -> {
+                                    if (task1.isSuccessful())
+                                    {
+                                        System.out.println("darvo");
+                                        FirebaseDatabase.getInstance().getReference().child("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).
+                                                child("deviceId").setValue(deviceId);
+                                        ((Parent) Registration.this.getApplication()).setParentId(deviceId);
+                                        Toast.makeText(Registration.this,"Vous êtes enregistré!" , Toast.LENGTH_LONG).show();
+                                        startActivity(new Intent(Registration.this , MainActivity.class));
+                                    } else
+                                    {
+                                        System.out.println("darvi");
+                                        Toast.makeText(Registration.this , "Le démarche n'est pas réussi veuillez essayer encore" , Toast.LENGTH_LONG).show();
+                                    }
+                                });
                     } else
                         Toast.makeText(Registration.this , "Le démarche n'est pas réussi veuillez essayer encore" , Toast.LENGTH_LONG).show();
                 });
