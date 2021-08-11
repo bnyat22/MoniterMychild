@@ -8,6 +8,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -15,7 +16,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Geocoder;
 import android.location.Location;
@@ -25,6 +28,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Log;
@@ -52,6 +56,11 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentActivity;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.request.transition.Transition;
 import com.example.localiser.domains.MyLocation;
 import com.example.localiser.domains.Parent;
 import com.google.android.gms.maps.CameraUpdate;
@@ -78,7 +87,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 import java.text.ParseException;
@@ -134,7 +146,7 @@ private FirebaseAuth auth;
     String bPermission = Manifest.permission.ACCESS_BACKGROUND_LOCATION;
    private LatLng startLatlng;
    private String childName;
-    String[] listnames= {"dilan" , "darvin"};
+    String[] listnames= {"darvin","hawre"};
 
     @SuppressLint("HardwareIds")
     @Override
@@ -393,23 +405,31 @@ onReadChanges();
                 MyLocation location;
                 if (snapshot.exists()) {
                     if (actuelId.equals(parentId)) {
+                        System.out.println("ccc" + actuelId + " ///" + parentId);
                         for (DataSnapshot ds: snapshot.getChildren()) {
                             listChild.add(ds.getKey());
                             location = ds.child("locations").getValue(MyLocation.class);
-                            startLatlng = new LatLng(location.getLatitude(), location.getLongitude());
-                            Marker  marker = null;
-                            try {
+                            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                                 System.out.println("du naby dli " + ds.child("picture").getValue());
-                                URL url = new URL(ds.child("picture").getValue().toString());
-                                Bitmap bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());
+                                Uri uri = Uri.parse(ds.child("picture").getValue().toString());
+                              Glide.with(Home.this).asBitmap().dontTransform().load(uri).circleCrop().into(new CustomTarget<Bitmap>() {
+                                  @Override
+                                  public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
 
-                                marker = mMap.addMarker(new MarkerOptions().position(startLatlng)
+                                        Marker  marker = mMap.addMarker(new MarkerOptions().position(latLng)
+                                                  .icon(bitmapDescriptorFromVector(resource,ds.getKey()))
+                                                  .anchor(0.5f, 1));
+                                          markers.put(ds.getKey(),marker);
 
-                                          .icon(BitmapDescriptorFactory.fromBitmap(bmp)));
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            markers.put(ds.getKey(),marker);
+                                  }
+
+                                  @Override
+                                  public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                                  }
+                              });
+
+
 
 
                             Query query = polygonRef.child(ds.getKey()).child("polygons");
@@ -418,36 +438,45 @@ onReadChanges();
                             querySpecific(specifiQuery);
                         }
                     } else {
+                        System.out.println("7anafi");
                         String name = ((Parent) Home.this.getApplication()).getChildName();
                         adapterSearch.add(name);
                         location = snapshot.getValue(MyLocation.class);
-                        startLatlng = new LatLng(location.getLatitude(), location.getLongitude());
-                        try {
+                        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
 
-                            URL url = new URL(snapshot.child("picture").getValue().toString());
-                            Bitmap bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());
 
-                            myMarker = mMap.addMarker(new MarkerOptions().position(startLatlng)
-                                    .icon(BitmapDescriptorFactory.fromBitmap(bmp)));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+
+                            Uri uri = Uri.parse(snapshot.child("picture").getValue().toString());
+
+
+
+
+                            Glide.with(Home.this).asBitmap().load(uri).into(new CustomTarget<Bitmap>() {
+                                @Override
+                                public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                                  Marker  marker = mMap.addMarker(new MarkerOptions().position(latLng)
+                                            .icon(bitmapDescriptorFromVector(resource,snapshot.getKey())).
+                                          anchor(0.5f, 1));
+
+                                    markers.put(snapshot.getKey(),marker);
+                                }
+
+                                @Override
+                                public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                                }
+                            });
                         Query query = polygonRef;
                         Query specifiQuery = specificRef;
                         queryNormalPolygon(query);
                         querySpecific(specifiQuery);
                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 18.0f));
                     }
-
-
-
                 //    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 18.0f));
                 } else {
                     myMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(43.6368272,3.846629)).title("Marker in Montpellier").icon(bitmapDescriptorFromVector(Home.this,R.drawable.ic_enfant_icon)));
                 }
-
             }
-
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
 
@@ -808,19 +837,36 @@ System.out.println("waxt  " + from);
        // Bitmap bitmap = Bitmap.createScaledBitmap(Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888) , 50 , 50 , false);
       //  bitmap.setWidth(10);
         //bitmap.setHeight(10);
-       // Bitmap smallMarker = Bitmap.createScaledBitmap(bitmap, 50, 50, false);
+        Bitmap smallMarker = Bitmap.createScaledBitmap(bitmap, 50, 50, false);
         Canvas canvas = new Canvas(bitmap);
         vectorDrawable.draw(canvas);
         return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
-    private BitmapDescriptor bitmapDescriptorFromVector(String vectorResId) throws IOException {
+    private BitmapDescriptor bitmapDescriptorFromVector(Bitmap bmp,String name)  {
 
-        Uri imageUri = Uri.parse(vectorResId);
-        Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+        Canvas canvas1 = new Canvas(bmp);
+
+        Paint color = new Paint();
+        color.setTextSize(30);
+        color.setColor(Color.BLACK);
+
+        BitmapFactory.Options opt = new BitmapFactory.Options();
+        opt.inMutable = true;
 
 
-        bitmap.prepareToDraw();
-        return BitmapDescriptorFactory.fromBitmap(bitmap);
+        Bitmap resized = Bitmap.createScaledBitmap(bmp, 200, 200, true);
+        canvas1.drawBitmap(resized, 20, 20, color);
+        canvas1.drawPaint(color);
+
+        canvas1.drawText(name, 30, 40, color);
+        return BitmapDescriptorFactory.fromBitmap(resized);
+    }
+    public static final Bitmap getBitmap(ContentResolver cr, Uri url)
+            throws FileNotFoundException, IOException {
+        InputStream input = cr.openInputStream(url);
+        Bitmap bitmap = BitmapFactory.decodeStream(input);
+        input.close();
+        return bitmap;
     }
 
     @Override

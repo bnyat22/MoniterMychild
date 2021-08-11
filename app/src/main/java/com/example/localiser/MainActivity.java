@@ -124,12 +124,16 @@ public class MainActivity extends AppCompatActivity {
                    String parentId = ((Parent) MainActivity.this.getApplication()).getParentId();
                    System.out.println("lezgin" + parentId);
                    if (!deviceId.equals(parentId)) {
+                       boolean exist;
                        for (DataSnapshot ds : snapshot.child("children").getChildren()) {
-                           boolean exist = false;
-                           if (ds.child("id").getValue().equals(deviceId)) {
+                         exist = false;
+                           if (deviceId.equals(ds.child("id").getValue())) {
+                               System.out.println("msher");
                                exist = true;
                                ((Parent) MainActivity.this.getApplication())
                                        .setChildName(ds.getKey());
+                               ((Parent) MainActivity.this.getApplication()).setParentId(deviceId);
+                               startActivity(homeIntent);
                                break;
                            }
                            if (!exist) {
