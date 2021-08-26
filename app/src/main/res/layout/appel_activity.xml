@@ -37,10 +37,23 @@
 
                 </com.google.android.material.appbar.MaterialToolbar>
 
-                <ListView
-                    android:id="@+id/records_list"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"/>
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+                    <androidx.appcompat.widget.AppCompatSpinner
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/spinner_call"
+                        android:layout_marginTop="10dp"/>
+
+                    <ListView
+                        android:id="@+id/records_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"/>
+
+                </LinearLayout>
+
             </com.google.android.material.appbar.AppBarLayout>
 
 

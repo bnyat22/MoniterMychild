@@ -3,50 +3,55 @@ package com.example.localiser;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
+import android.app.AlertDialog;
+import android.app.AppOpsManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.ComponentName;
+
+import android.app.usage.UsageStats;
+import android.app.usage.UsageStatsManager;
 import android.content.ContentResolver;
 import android.content.Context;
+
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Point;
-import android.graphics.drawable.BitmapDrawable;
+
 import android.graphics.drawable.Drawable;
-import android.location.Geocoder;
-import android.location.Location;
-import android.location.LocationListener;
+
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.ParcelFileDescriptor;
-import android.provider.MediaStore;
+
 import android.provider.Settings;
+
+
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.DrawableRes;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SearchView;
+
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
@@ -58,8 +63,7 @@ import androidx.fragment.app.FragmentActivity;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.target.SimpleTarget;
-import com.bumptech.glide.request.target.Target;
+
 import com.bumptech.glide.request.transition.Transition;
 import com.example.localiser.domains.MyLocation;
 import com.example.localiser.domains.Parent;
@@ -76,8 +80,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -87,25 +90,26 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
-import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URL;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.DayOfWeek;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.EventListener;
+
 import java.util.HashMap;
-import java.util.Iterator;
+
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 @RequiresApi(api = Build.VERSION_CODES.Q)
 public class Home extends FragmentActivity implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
@@ -117,7 +121,7 @@ public class Home extends FragmentActivity implements NavigationView.OnNavigatio
    //firebase
 private FirebaseAuth auth;
     private FirebaseDatabase database;
-    private DatabaseReference reference , polygonRef , specificRef , refAuth;
+    private DatabaseReference reference , polygonRef , specificRef , refChild,refAuthorities;
     private String actuelId , parentId;
 
     //notifications
@@ -129,7 +133,7 @@ private FirebaseAuth auth;
 
 
    //map elements
-    private ListView listViewSearch;
+
     private Spinner dropdown;
     private ArrayAdapter<String> adapterSearch;
     private List<String> listChild;
@@ -146,12 +150,26 @@ private FirebaseAuth auth;
     String bPermission = Manifest.permission.ACCESS_BACKGROUND_LOCATION;
    private LatLng startLatlng;
    private String childName;
-    String[] listnames= {"darvin","hawre"};
+    String[] listnames ;
+    boolean connected = false;
 
     @SuppressLint("HardwareIds")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        boolean granted = false;
+        AppOpsManager appOps = (AppOpsManager) this
+                .getSystemService(Context.APP_OPS_SERVICE);
+        int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(), this.getPackageName());
+
+        if (mode == AppOpsManager.MODE_DEFAULT) {
+            granted = (this.checkCallingOrSelfPermission(android.Manifest.permission.PACKAGE_USAGE_STATS) == PackageManager.PERMISSION_GRANTED);
+        } else {
+            granted = (mode == AppOpsManager.MODE_ALLOWED);
+        }
+        System.out.println("lafafl " + granted);
         setContentView(R.layout.home_acivity);
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.navigation_view);
@@ -162,10 +180,40 @@ private FirebaseAuth auth;
             drawerLayout.openDrawer(GravityCompat.START); });
         dropdown = findViewById(R.id.spinner_search);
         listChild = new ArrayList<>();
+        listnames = new String[100];
+        listChild.add("Choisissez un enfant");
+       System.out.println("jingule" + needPermissionForBlocking(this));
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            UsageStatsManager usm = (UsageStatsManager)this.getSystemService(Context.USAGE_STATS_SERVICE);
+            long time = System.currentTimeMillis();
+            List<UsageStats> appList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,  time - 10000*10000, time);
+            if (appList != null && appList.size() == 0) {
+                Log.d("Executed app", "######### NO APP FOUND ##########" );
+            }
+            if (appList != null && appList.size() > 0) {
+                SortedMap<Long, UsageStats> mySortedMap = new TreeMap<Long, UsageStats>();
+                for (UsageStats usageStats : appList) {
+                    Log.d("Executed app", "usage stats executed : " +usageStats.getPackageName() + "\t\t ID: ");
+                    mySortedMap.put(usageStats.getLastTimeUsed(), usageStats);
+                }
+                if (mySortedMap != null && !mySortedMap.isEmpty()) {
+                    String currentApp = mySortedMap.get(mySortedMap.lastKey()).getPackageName();
+
+                }
+            }
+        }
+
+        //check network connectivity
+        checkNetworkConnectivity();
+        System.out.println("xataka " + connected);
+
+        //get IMEI
+       // TelephonyManager telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+   //  System.out.println( "imei" +   telephonyManager.getImei());
 
 
 
-        adapterSearch = new ArrayAdapter<>(this ,android.R.layout.simple_list_item_1 ,listnames);
+        adapterSearch = new ArrayAdapter<>(this ,android.R.layout.simple_list_item_1 ,listChild);
       //  listViewSearch.setAdapter(adapterSearch);
 
 
@@ -180,6 +228,16 @@ private FirebaseAuth auth;
                         {
                             if(ds.getKey().equals(listChild.get(position)))
                             {
+                                if (ds.child("network").getValue(String.class).equals("false"))
+                                {
+                                    Intent intent = new Intent(getApplicationContext(), GpsTracker.class);
+                                    PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
+                                    SmsManager smsManager = SmsManager.getDefault();
+
+
+                                    smsManager.sendTextMessage(ds.child("number").getValue(String.class), null,
+                                             "Envoie moi ta position", pi, null);
+                                }
                                 MyLocation location = ds.child("locations").getValue(MyLocation.class);
                                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(),
                                         location.getLongitude()), 18.0f));
@@ -214,7 +272,7 @@ private FirebaseAuth auth;
         dangereux = new NotificationCompat.Builder(this , "1")
                 .setSmallIcon(R.drawable.ic_baseline_add_alert_24)
                 .setContentTitle("Attention")
-                .setContentText("Votre enfant est à un endroit dangreux")
+                .setContentText("Votre enfant est à un endroit dangereux")
         .setPriority(NotificationCompat.PRIORITY_HIGH);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
@@ -281,6 +339,14 @@ private FirebaseAuth auth;
 
         }
 
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
+                != PackageManager.PERMISSION_GRANTED) {
+            // permission is not granted, ask for permission:
+           ActivityCompat.requestPermissions(this, //assuming this is Activity or a subclass of it
+                    new String[] { Manifest.permission.SEND_SMS},
+                    234);
+        }
+
 
 //initialiser firebase elements
         auth = FirebaseAuth.getInstance();
@@ -300,12 +366,18 @@ private FirebaseAuth auth;
                     .child("children");
         }else {
 
+
             reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
                     .child("children").child(childName).child("locations");
+            refChild = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                    .child("children").child(childName);
             polygonRef = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
                     .child("children").child(childName).child("polygons");
             specificRef = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
                     .child("children").child(childName).child("specific");
+            refAuthorities = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                    .child("children").child(childName).child("authorities");
+            getAuthorities();
         }
 
 
@@ -325,6 +397,26 @@ private FirebaseAuth auth;
 onReadChanges();
 
 
+    }
+
+    private void getAuthorities() {
+        refAuthorities.addListenerForSingleValueEvent(new ValueEventListener() {
+            Map<String , String> authorities = new HashMap<>();
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                snapshot.getChildren().forEach((ds) ->
+                        authorities.put(ds.getKey(), ds.getValue(String.class))
+
+                );
+                System.out.println("parok" +authorities.size());
+                ((Parent) Home.this.getApplication()).setAuthorities(authorities);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
 
@@ -405,12 +497,12 @@ onReadChanges();
                 MyLocation location;
                 if (snapshot.exists()) {
                     if (actuelId.equals(parentId)) {
-                        System.out.println("ccc" + actuelId + " ///" + parentId);
+                        System.out.println("ccc" + actuelId + " ///" + parentId + ":: " + snapshot.getValue());
                         for (DataSnapshot ds: snapshot.getChildren()) {
                             listChild.add(ds.getKey());
                             location = ds.child("locations").getValue(MyLocation.class);
                             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                                System.out.println("du naby dli " + ds.child("picture").getValue());
+
                                 Uri uri = Uri.parse(ds.child("picture").getValue().toString());
                               Glide.with(Home.this).asBitmap().dontTransform().load(uri).circleCrop().into(new CustomTarget<Bitmap>() {
                                   @Override
@@ -429,48 +521,58 @@ onReadChanges();
                                   }
                               });
 
-
-
-
                             Query query = polygonRef.child(ds.getKey()).child("polygons");
                             Query specifiQuery = specificRef.child(ds.getKey()).child("specific");
                             queryNormalPolygon(query);
-                            querySpecific(specifiQuery);
+                            querySpecific(specifiQuery , ds.getKey());
                         }
                     } else {
                         System.out.println("7anafi");
-                        String name = ((Parent) Home.this.getApplication()).getChildName();
-                        adapterSearch.add(name);
-                        location = snapshot.getValue(MyLocation.class);
-                        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                        System.out.println("nma " + snapshot.getKey());
+
+                        refChild.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                String name = ((Parent) Home.this.getApplication()).getChildName();
+                                adapterSearch.add(name);
+                               MyLocation location = snapshot.getValue(MyLocation.class);
+                                LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+
+                                Uri uri = Uri.parse(dataSnapshot.child("picture").getValue().toString());
+                                Glide.with(Home.this).asBitmap().load(uri).into(new CustomTarget<Bitmap>() {
+                                    @Override
+                                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                                        Marker  marker = mMap.addMarker(new MarkerOptions().position(latLng)
+                                                .icon(bitmapDescriptorFromVector(resource,dataSnapshot.getKey())).
+                                                        anchor(0.5f, 1));
+
+                                        markers.put(snapshot.getKey(),marker);
+                                    }
+
+                                    @Override
+                                    public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                                    }
+                                });
+                                Query query = polygonRef;
+                                Query specifiQuery = specificRef;
+
+                                queryNormalPolygon(query);
+                                querySpecific(specifiQuery , childName);
+                                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 18.0f));
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+
+                            }
+                        });
 
 
 
-                            Uri uri = Uri.parse(snapshot.child("picture").getValue().toString());
 
 
 
-
-                            Glide.with(Home.this).asBitmap().load(uri).into(new CustomTarget<Bitmap>() {
-                                @Override
-                                public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                                  Marker  marker = mMap.addMarker(new MarkerOptions().position(latLng)
-                                            .icon(bitmapDescriptorFromVector(resource,snapshot.getKey())).
-                                          anchor(0.5f, 1));
-
-                                    markers.put(snapshot.getKey(),marker);
-                                }
-
-                                @Override
-                                public void onLoadCleared(@Nullable Drawable placeholder) {
-
-                                }
-                            });
-                        Query query = polygonRef;
-                        Query specifiQuery = specificRef;
-                        queryNormalPolygon(query);
-                        querySpecific(specifiQuery);
-                           mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 18.0f));
                     }
                 //    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 18.0f));
                 } else {
@@ -516,7 +618,7 @@ onReadChanges();
         });
     }
 
-    private void querySpecific(Query query)
+    private void querySpecific(Query query , String childName)
     {
 
         ValueEventListener queryValueListener = new ValueEventListener() {
@@ -527,11 +629,13 @@ onReadChanges();
 
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot ds : dataSnapshot.getChildren()) {
+                        System.out.println("brnj " + ds.getKey());
                         for (DataSnapshot dt : ds.getChildren()) {
+                            System.out.println("nok " + dt.getKey());
                             Polygon polygon;
                             //get latitute and longitude
                             PolygonOptions polygonOptions = new PolygonOptions();
-                            List<Object> points = (List<Object>) dt.child("polygon").child("points").getValue();
+                            List<Object> points = (List<Object>) ds.child("polygon").child("points").getValue();
                             for (int i = 0; i < points.size(); i++) {
                                 HashMap<String, Double> data = (HashMap<String, Double>) points.get(i);
                                 double latitude = data.get("latitude");
@@ -540,16 +644,19 @@ onReadChanges();
                                 polygonOptions.add(latLng);
                             }
                             polygon = mMap.addPolygon(polygonOptions);
-                            polygon.setFillColor(dt.child("polygon").child("fillColor").getValue(Integer.class));
-                            polygon.setStrokeColor(dt.child("polygon").child("strokeColor").getValue(Integer.class));
+                            polygon.setFillColor(ds.child("polygon").child("fillColor").getValue(Integer.class));
+                            polygon.setStrokeColor(ds.child("polygon").child("strokeColor").getValue(Integer.class));
 
                             String day = LocalDate.now().getDayOfWeek().name();
 
 
-                            String from = dt.child(day).getValue(String.class);
-                            String to = dt.child(day).getValue(String.class);
-                            if (!from.equals("du"))
-                                specificDataChange(polygon, from, to);
+                            if (!dt.getKey().equals("polygon") && dt.getKey().equals(day)) {
+                                String from = dt.child("du").getValue(String.class);
+                                String to = dt.child("a").getValue(String.class);
+                                System.out.println("zalat " + dt.getKey());
+                                if (!dt.child(day).child("du").equals("du"))
+                                    specificDataChange(childName,polygon, from, to , ds.getKey());
+                            }
                         }
                     }
                 }
@@ -604,7 +711,7 @@ onReadChanges();
         query.addListenerForSingleValueEvent(queryValueListener);
 
     }
-    private void specificDataChange(Polygon polygon , String from, String to)
+    private void specificDataChange(String name ,Polygon polygon , String from, String to , String place)
     {
 
         reference.addValueEventListener(new ValueEventListener() {
@@ -613,12 +720,10 @@ onReadChanges();
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
                     try {
-                        if (actuelId.equals(parentId)) {
-                            for (DataSnapshot ds:snapshot.getChildren())
-                            checkSpecifiquePolygon(ds,polygon,from,to);
-                        } else {
-                            checkSpecifiquePolygon(snapshot,polygon,from,to);
-                        }
+
+                                checkSpecifiquePolygon(snapshot.child(name), polygon, from, to , place);
+
+
 
                     } catch (Exception e)
                     {
@@ -681,22 +786,28 @@ System.out.println("waxt  " + from);
 
                 if (snapshot.exists()) {
                     try {
-                        location = snapshot.getValue(MyLocation.class);
-                        LatLng latLng= new LatLng(location.getLatitude() , location.getLongitude());
-                        if (pointInPolygon(latLng , polygon)) {
-                            if (actuelId.equals(parentId))
-                            notificationManagerCompat.notify(1, dangereux.build());
-                            else
-                                notificationManagerCompat.notify(1, dangeraeuxEnfant.build());
+                        for (DataSnapshot ds : snapshot.getChildren()) {
+                            location = ds.child("locations").getValue(MyLocation.class);
+                            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                            System.out.println("asaey nya" + location.getLatitude());
+                            if (pointInPolygon(latLng, polygon)) {
+
+                                if (actuelId.equals(parentId))
+                                    notificationManagerCompat.notify(1,
+                                            dangereux.setContentText(ds.getKey() + " est à un endroit dangereux").build());
+                                else
+                                    notificationManagerCompat.notify(1, dangeraeuxEnfant.build());
+                            } else
+                                System.out.println("asaeya");
                         }
-                        else
-                            System.out.println("asaeya");
-                    } catch (Exception e)
-                    {
-                        Toast.makeText(Home.this , e.getMessage() , Toast.LENGTH_LONG).show();
+                    } catch (Exception e) {
+                        Toast.makeText(Home.this, e.getMessage(), Toast.LENGTH_LONG).show();
                     }
+
                 }
+
             }
+
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
@@ -771,33 +882,39 @@ System.out.println("waxt  " + from);
 
 
     private void checkSpecifiquePolygon(DataSnapshot snapshot
-            ,Polygon polygon , String from ,String to)
+            ,Polygon polygon , String from ,String to , String place)
     {
+        System.out.println("ddd" + snapshot.getKey());
 
 
-      MyLocation  location = snapshot.getValue(MyLocation.class);
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        builder.include(latLng);
-        final LatLngBounds bounds = builder.build();
+            System.out.println("nayee");
+            MyLocation location = snapshot.child("locations").getValue(MyLocation.class);
 
-        //BOUND_PADDING is an int to specify padding of bound.. try 100.
-        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 100);
-        mMap.animateCamera(cu);
-        System.out.println("rasta ");
-        System.out.println("rasta p" + pointInPolygon(latLng, polygon));
+            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            builder.include(latLng);
+            final LatLngBounds bounds = builder.build();
 
-        if (pointInPolygon(latLng, polygon) && isTimeBetween(from, to))
-            System.out.println("laweya");
-        else if (pointInPolygon(latLng, polygon) && !isTimeBetween(from, to))
-            System.out.println("laweya");
-        else if (!pointInPolygon(latLng, polygon) && isTimeBetween(from, to)) {
-            if (actuelId.equals(parentId))
-                notificationManagerCompat.notify(2, manque.build());
-            else
-                notificationManagerCompat.notify(2, manqueEnfant.build());
+            //BOUND_PADDING is an int to specify padding of bound.. try 100.
+            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 100);
+            mMap.animateCamera(cu);
+            System.out.println("rasta " + isTimeBetween(from, to));
+            System.out.println("rasta p" + pointInPolygon(latLng, polygon));
+
+            if (pointInPolygon(latLng, polygon) && isTimeBetween(from, to))
+                System.out.println("laweya");
+            else if (pointInPolygon(latLng, polygon) && !isTimeBetween(from, to))
+                System.out.println("laweya");
+            else if (!pointInPolygon(latLng, polygon) && isTimeBetween(from, to)) {
+                System.out.println("helona");
+                if (actuelId.equals(parentId))
+                    notificationManagerCompat.notify(2, manque.setContentText( snapshot.getKey()+ " n'est pas à " + place).build());
+                else
+                    notificationManagerCompat.notify(2, manqueEnfant.setContentText("tu n'es pas à " + place).build());
+            }
         }
-    }
+
+
 
    private Polygon getPolygon(DataSnapshot ds){
 
@@ -834,9 +951,6 @@ System.out.println("waxt  " + from);
         Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorResId);
         vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());
         Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-       // Bitmap bitmap = Bitmap.createScaledBitmap(Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888) , 50 , 50 , false);
-      //  bitmap.setWidth(10);
-        //bitmap.setHeight(10);
         Bitmap smallMarker = Bitmap.createScaledBitmap(bitmap, 50, 50, false);
         Canvas canvas = new Canvas(bitmap);
         vectorDrawable.draw(canvas);
@@ -867,6 +981,18 @@ System.out.println("waxt  " + from);
         Bitmap bitmap = BitmapFactory.decodeStream(input);
         input.close();
         return bitmap;
+    }
+   private void  checkNetworkConnectivity()
+    {
+
+        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        if(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
+                connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED) {
+            //we are connected to a network
+            connected = true;
+        }
+        else
+            connected = false;
     }
 
     @Override
@@ -916,13 +1042,41 @@ System.out.println("waxt  " + from);
     }
 
     private void openVidoes() {
-        Intent intent = new Intent(this , VideoActivity.class);
-        startActivity(intent);
+        Intent intent = new Intent(this, VideoActivity.class);
+        if (!actuelId.equals(parentId)) {
+
+           String isAllowed = ((Parent) this.getApplication()).getAuthorities().get("videos");
+           System.out.println("joj " +((Parent) this.getApplication()).getAuthorities().size() );
+           if (isAllowed.equals("true"))
+            startActivity(intent);
+           else
+               errorAuthorisationPopup("Videos");
+        } else {
+            startActivity(intent);
+        }
+    }
+
+    private void errorAuthorisationPopup(String page) {
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle("Erreur Permission");
+        alert.setMessage("Tu n'es pas authorisé à voir les " +page );
+        alert.setPositiveButton("Ok", (dialog, which) -> dialog.dismiss());
+        alert.show();
     }
 
     private void openImages() {
-        Intent intent = new Intent(this , ImageActivity.class);
-        startActivity(intent);
+        Intent intent = new Intent(this, ImageActivity.class);
+        if (!actuelId.equals(parentId)) {
+
+            String isAllowed = ((Parent) this.getApplication()).getAuthorities().get("images");
+            System.out.println("joj " +((Parent) this.getApplication()).getAuthorities().size() );
+            if (isAllowed.equals("true"))
+                startActivity(intent);
+            else
+                errorAuthorisationPopup("images");
+        } else {
+            startActivity(intent);
+        }
     }
 
 
@@ -931,41 +1085,102 @@ System.out.println("waxt  " + from);
         startActivity(intent);
     }
     private void openAppel() {
-        Intent intent = new Intent(this , AppelActivity.class);
-        startActivity(intent);
+        Intent intent = new Intent(this, AppelActivity.class);
+        if (!actuelId.equals(parentId)) {
+
+            String isAllowed = ((Parent) this.getApplication()).getAuthorities().get("appels");
+            System.out.println("joj " +((Parent) this.getApplication()).getAuthorities().size() );
+            if (isAllowed.equals("true"))
+                startActivity(intent);
+            else
+                errorAuthorisationPopup("appels");
+        } else {
+            startActivity(intent);
+        }
     }
 
     private void openParler() {
-        Intent intent = new Intent(this , ParlerActivity.class);
-        startActivity(intent);
+        Intent intent = new Intent(this, ParlerActivity.class);
+        if (!actuelId.equals(parentId)) {
+
+            String isAllowed = ((Parent) this.getApplication()).getAuthorities().get("parler");
+            System.out.println("joj " +((Parent) this.getApplication()).getAuthorities().size() );
+            if (isAllowed.equals("true"))
+                startActivity(intent);
+            else
+                errorAuthorisationPopup("parler et ècouter");
+        } else {
+            startActivity(intent);
+        }
     }
 
     private void openMeassages() {
-        Intent intent = new Intent(this , MessagesActivity.class);
-        startActivity(intent);
+        Intent intent = new Intent(this, MessagesActivity.class);
+        if (!actuelId.equals(parentId)) {
+
+            String isAllowed = ((Parent) this.getApplication()).getAuthorities().get("messages");
+            System.out.println("joj " +((Parent) this.getApplication()).getAuthorities().size() );
+            if (isAllowed.equals("true"))
+                startActivity(intent);
+            else
+                errorAuthorisationPopup("messages");
+        } else {
+            startActivity(intent);
+        }
     }
     private void openTrace() {
-        Intent intent = new Intent(this , TraceActivity.class);
-        startActivity(intent);
+        Intent intent = new Intent(this, TraceActivity.class);
+        if (!actuelId.equals(parentId)) {
+
+            String isAllowed = ((Parent) this.getApplication()).getAuthorities().get("tracer");
+            System.out.println("joj " +((Parent) this.getApplication()).getAuthorities().size() );
+            if (isAllowed.equals("true"))
+                startActivity(intent);
+            else
+                errorAuthorisationPopup(" traces");
+        } else {
+            startActivity(intent);
+        }
     }
     private void openRestricion() {
-        startActivity(new Intent(this , MapsActivity.class));
+        Intent intent = new Intent(this, MapsActivity.class);
+        if (!actuelId.equals(parentId)) {
+
+            String isAllowed = ((Parent) this.getApplication()).getAuthorities().get("restrictions");
+            System.out.println("joj " +((Parent) this.getApplication()).getAuthorities().size() );
+            if (isAllowed.equals("true"))
+                startActivity(intent);
+            else
+                errorAuthorisationPopup("restrictions");
+        } else {
+            startActivity(intent);
+        }
     }
     private void openBrowser() {
+        if (actuelId.equals(parentId))
         startActivity(new Intent(this , BrowserHistoryActivity.class));
+        else
+            errorAuthorisationPopup("configurations");
     }
-
+    public static boolean needPermissionForBlocking(Context context){
+        try {
+            PackageManager packageManager = context.getPackageManager();
+            ApplicationInfo applicationInfo = packageManager.getApplicationInfo(context.getPackageName(), 0);
+            AppOpsManager appOpsManager = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
+            int mode = appOpsManager.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, applicationInfo.uid, applicationInfo.packageName);
+            return  (mode != AppOpsManager.MODE_ALLOWED);
+        } catch (PackageManager.NameNotFoundException e) {
+            return true;
+        }
+    }
     private void logout() {
         auth.signOut();
 
         Intent intent = new Intent(this , MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
-        //auth.removeIdTokenListener(auth.getAccessToken(true));
-
-
-
     }
+
         }
 
 

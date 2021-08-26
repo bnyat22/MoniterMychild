@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -48,6 +49,11 @@ public class AppelActivity extends AppCompatActivity implements NavigationView.O
     private Toolbar toolbar;
     private AudioAdapter adapter;
     private ListView listView;
+    private String childName;
+    private List<String> childList;
+    private ArrayAdapter<String> arrayAdapter;
+    private Spinner dropdown;
+
 
 
     //Device
@@ -57,7 +63,7 @@ public class AppelActivity extends AppCompatActivity implements NavigationView.O
 
     //Firebase
     private FirebaseAuth auth;
-    private DatabaseReference reference;
+    private DatabaseReference reference ,refChild;
 
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
@@ -76,7 +82,29 @@ public class AppelActivity extends AppCompatActivity implements NavigationView.O
         auth = FirebaseAuth.getInstance();
         reference = FirebaseDatabase.getInstance().getReference().child("Users")
                 .child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("records");
+        refChild = FirebaseDatabase.getInstance().getReference().child("Users")
+                .child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("children");
         listView = findViewById(R.id.records_list);
+        childList = new ArrayList<>();
+        childList.add("Choisissez un enfant");
+        getChildNames();
+        arrayAdapter = new ArrayAdapter<>(this , android.R.layout.simple_list_item_1,childList);
+        dropdown = findViewById(R.id.spinner_call);
+       dropdown.setAdapter(arrayAdapter);
+       dropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+           @Override
+           public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+               childName = childList.get(position);
+               if (!childName.equals("Choisissez un enfant"))
+               getChildRecords();
+           }
+
+           @Override
+           public void onNothingSelected(AdapterView<?> parent) {
+
+           }
+       });
+
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
                     != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
@@ -135,8 +163,12 @@ public class AppelActivity extends AppCompatActivity implements NavigationView.O
 
 
 
+
+    }
+
+    private void getChildRecords() {
         List<MyAudio> players = new ArrayList<>();
-        Query query = reference;
+        Query query = reference.child(childName);
         query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -145,12 +177,12 @@ public class AppelActivity extends AppCompatActivity implements NavigationView.O
                     System.out.println("biba lagal xot");
                     String from = ds.getKey();
                     String body = ds.getValue(String.class);
-                     MyAudio myAudio = new MyAudio(from , body);
+                    MyAudio myAudio = new MyAudio(from , body);
 
                     players.add(myAudio);
 
                 }
-           adapter = new AudioAdapter(AppelActivity.this , players);
+                adapter = new AudioAdapter(AppelActivity.this , players);
                 listView.setAdapter(adapter);
             }
 
@@ -161,11 +193,29 @@ public class AppelActivity extends AppCompatActivity implements NavigationView.O
         });
         listView.setOnItemClickListener((AdapterView.OnItemClickListener) (parent, view, position, id) -> {
             MyAudio audio = (MyAudio) listView.getItemAtPosition(position);
-              startActivity(new Intent(this,FullAudioActivity.class).putExtra("audio",audio.getUri()));
+            startActivity(new Intent(this,FullAudioActivity.class).putExtra("audio",audio.getUri()));
         });
 
 
 
+
+    }
+
+    private void getChildNames() {
+        refChild.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot ds:snapshot.getChildren())
+                {
+                    childList.add(ds.getKey());
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
     @Override

@@ -1,12 +1,14 @@
 package com.example.localiser.domains;
 
 public class MyMessage {
+
     private String title;
     private String body;
 
-    public MyMessage(String title, String body) {
+    public MyMessage(String title, String body ) {
         this.title = title;
         this.body = body;
+
     }
 
     public String getTitle() {
@@ -24,4 +26,6 @@ public class MyMessage {
     public void setBody(String body) {
         this.body = body;
     }
+
+
 }

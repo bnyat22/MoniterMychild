@@ -4,40 +4,38 @@ package com.example.localiser;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.admin.DevicePolicyManager;
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
-import android.content.ComponentName;
+
+import android.app.AppOpsManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.media.Image;
-import android.net.Uri;
+
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
-import android.provider.Settings;
-import android.util.Log;
+
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.Spinner;
+
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.example.localiser.domains.ImageModel;
+
 import com.example.localiser.domains.MessageAdapter;
-import com.example.localiser.domains.MyAudio;
+
 import com.example.localiser.domains.MyMessage;
-import com.google.android.gms.tasks.OnSuccessListener;
+
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -46,11 +44,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
-import java.io.File;
+
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,10 +61,14 @@ public class MessagesActivity extends AppCompatActivity implements NavigationVie
     private FirebaseAuth auth;
    private ListView listView;
    private MessageAdapter adapter;
-    static JobInfo JOB_INFO;
-    private StorageReference storageReference;
-    private DatabaseReference reference;
+   private String childName;
+   private List<String> childList;
+   private ArrayAdapter<String> arrayAdapter;
+   private Spinner dropdown;
+    private DatabaseReference reference , refChild;
 
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @SuppressLint("HardwareIds")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -83,26 +83,59 @@ public class MessagesActivity extends AppCompatActivity implements NavigationVie
             drawerLayout.openDrawer(GravityCompat.START); });
         auth = FirebaseAuth.getInstance();
         listView = findViewById(R.id.messages_list);
-        storageReference = FirebaseStorage.getInstance().getReference();
+        childList = new ArrayList<>();
+        childList.add("Choisissez un enfant");
+        arrayAdapter = new ArrayAdapter<>(this , android.R.layout.simple_list_item_1 , childList);
+        dropdown = findViewById(R.id.spinner_message);
+        dropdown.setAdapter(arrayAdapter);
+        reference = FirebaseDatabase.getInstance().getReference().child("Users")
+                .child(auth.getCurrentUser().getUid()).child("messages");
+        refChild = FirebaseDatabase.getInstance().getReference()
+                .child("Users").child(auth.getCurrentUser().getUid()).child("children");
+        getChildNames();
+        dropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                childName = childList.get(position);
+                if (!childName.equals("Choisissez un enfant"))
+                getChildMessages(childName);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+   /*     AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+        int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, this.getTaskId(), getPackageName());
+        boolean granted = (mode == AppOpsManager.MODE_ALLOWED);*/
+    //    System.out.println("place " + granted);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECEIVE_SMS},230);
         }
+    }
 
-        reference = FirebaseDatabase.getInstance().getReference().child("Users").child(auth.getCurrentUser().getUid()).child("messages");
+    private void getChildMessages(String childName) {
+
         List<MyMessage> messages = new ArrayList<>();
         Query query = reference;
         query.addValueEventListener(new ValueEventListener() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot ds:snapshot.getChildren())
                 {
-                    MyMessage myMessage = new MyMessage(ds.getKey(), ds.getValue(String.class));
-                    messages.add(myMessage);
+                    if (ds.getKey().equals(childName))
+                        ds.getChildren().forEach((dt)->
+                        {
+                            MyMessage myMessage = new MyMessage(dt.getKey(), dt.getValue(String.class));
+                            messages.add(myMessage);
 
+                        });
 
                 }
-            adapter = new MessageAdapter(MessagesActivity.this,messages);
+                adapter = new MessageAdapter(MessagesActivity.this,messages);
                 listView.setAdapter(adapter);
             }
 
@@ -119,9 +152,25 @@ public class MessagesActivity extends AppCompatActivity implements NavigationVie
             startActivity(intent);
         });
 
+
     }
 
+    private void getChildNames() {
+        refChild.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot ds:snapshot.getChildren())
+                {
+                    childList.add(ds.getKey());
+                }
+            }
 
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
 
     @Override
     public void onBackPressed() {

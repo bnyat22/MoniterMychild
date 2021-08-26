@@ -15,18 +15,23 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+import com.example.localiser.domains.Parent;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -41,8 +46,10 @@ import java.util.List;
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class VideoJobService extends JobService {
     private  static StorageReference storageReference;
-    private  static DatabaseReference reference;
+    private  static DatabaseReference reference,refChild;
     private  static FirebaseAuth auth;
+    private static String actuelId , parentId;
+
     JobParameters mRunningParams;
     final Handler mHandler = new Handler();
     final Runnable mWorker = new Runnable() {
@@ -112,7 +119,11 @@ public class VideoJobService extends JobService {
     public static void startJobService(Context context) {
         auth = FirebaseAuth.getInstance();
         reference = FirebaseDatabase.getInstance().getReference().child("Users").child(auth.getCurrentUser().getUid()).child("videos");
+        refChild = FirebaseDatabase.getInstance().getReference().child("Users").child(auth.getCurrentUser().getUid()).child("children");
+
         storageReference = FirebaseStorage.getInstance().getReference();
+        actuelId = Settings.Secure.getString(context.getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+        parentId = ((Parent) context.getApplicationContext()).getParentId();
         Log.d(TAG, "registerJob(): JobService init");
         if (!isRegistered(context)) {
             Log.d(TAG, "JobBuilder executes");
@@ -228,9 +239,25 @@ public class VideoJobService extends JobService {
                                      Uri thumbUri= getImageUri(this , thumb);
                                     st.putFile(uri).addOnSuccessListener(taskSnapshot -> taskSnapshot.getStorage().getDownloadUrl().addOnSuccessListener(uri1 -> {
 
+                                        refChild.addListenerForSingleValueEvent(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                                snapshot.getChildren().forEach((ds)-> {
+                                                    if (actuelId.equals(ds.child("id").getValue())) {
+                                                        reference.child(ds.getKey()).child(name[0]).child("video").setValue(uri1.toString());
+                                                        reference.child(name[0]).child("thumb").setValue(name[0]);
+                                                    }
+                                                });
 
-                                            this.reference.child(name[0]).child("video").setValue(uri1.toString());
-                                        this.reference.child(name[0]).child("thumb").setValue(name[0]);
+                                            }
+
+                                            @Override
+                                            public void onCancelled(@NonNull DatabaseError error) {
+
+                                            }
+                                        });
+
+
                                     }));
                                     st.putFile(thumbUri).addOnSuccessListener(taskSnapshot -> taskSnapshot.getStorage().getDownloadUrl().addOnSuccessListener(uri1 -> {
 

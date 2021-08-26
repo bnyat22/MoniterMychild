@@ -8,17 +8,22 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -46,6 +51,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class ImageActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     //Drawer
@@ -53,7 +59,7 @@ public class ImageActivity extends AppCompatActivity implements NavigationView.O
     private NavigationView navigationView;
     private Toolbar toolbar;
     private FirebaseAuth auth;
-    private DatabaseReference reference;
+    private DatabaseReference reference , refChild;
 
     //image
     public static final int REQUEST_IMAGE_CAPTURE = 1;
@@ -72,6 +78,11 @@ public class ImageActivity extends AppCompatActivity implements NavigationView.O
     String[] projection = {MediaStore.MediaColumns.DATA};
     File image;
     Button done;
+    private String childName;
+    private List<String> childList;
+    private ArrayAdapter<String> arrayAdapter;
+    private Spinner dropdown;
+
 
 
     @Override
@@ -88,19 +99,63 @@ public class ImageActivity extends AppCompatActivity implements NavigationView.O
         auth = FirebaseAuth.getInstance();
         reference  = FirebaseDatabase.getInstance().getReference()
                 .child("Users").child(auth.getCurrentUser().getUid()).child("images");
+        refChild  = FirebaseDatabase.getInstance().getReference()
+                .child("Users").child(auth.getCurrentUser().getUid()).child("children");
+        childList = new ArrayList<>();
+        childList.add("Choisissez un enfant");
+        arrayAdapter = new ArrayAdapter<>(this , android.R.layout.simple_list_item_1 , childList);
+        dropdown = findViewById(R.id.spinner_image);
+        dropdown.setAdapter(arrayAdapter);
+        getChildNames();
 
-        if (isStoragePermissionGranted()) {
-            init();
-            getAllImages();
-          //  setImageList();
-         //   setSelectedImageList();
-        }
+
+        dropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                childName =childList.get(position);
+                if (!childName.equals("Choisissez un enfant"))
+                if (isStoragePermissionGranted()) {
+                    init();
+                    getAllImages(childName);
+                    //  setImageList();
+                    //   setSelectedImageList();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
 //setSupportActionBar(toolbar);
 
 
 //navigationView.setCheckedItem();
 
     }
+
+    private void getChildNames() {
+
+
+            refChild.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    for (DataSnapshot ds:snapshot.getChildren())
+                    {
+                        childList.add(ds.getKey());
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });
+        }
+
+
+
     public void init(){
         imageRecyclerView = findViewById(R.id.recycler_view);
         selectedImageRecyclerView = findViewById(R.id.selected_recycler_view);
@@ -162,10 +217,10 @@ public class ImageActivity extends AppCompatActivity implements NavigationView.O
     }
 
     // get all images from external storage
-    public void getAllImages(){
+    public void getAllImages(String childName){
         imageList.clear();
 
-        reference.addValueEventListener(new ValueEventListener() {
+        reference.child(childName).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot s:snapshot.getChildren())
@@ -256,6 +311,7 @@ System.out.println("kuiiii");
         return image;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
@@ -332,7 +388,7 @@ System.out.println("kuiiii");
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == STORAGE_PERMISSION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             init();
-            getAllImages();
+            getAllImages(childName);
          //   setImageList();
             setSelectedImageList();
         }

@@ -15,8 +15,12 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.Settings;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
@@ -88,6 +92,10 @@ public class TraceActivity extends AppCompatActivity implements NavigationView.O
     private List<LatLng> latLngs = new ArrayList<>();
     private Polyline polyline;
     private final double degreesPerRadian = 180.0 / Math.PI;
+    private Spinner dropdown;
+    private ArrayAdapter<String> arrayAdapter;
+    private List<String> childList;
+    private String childName;
     @SuppressLint({"SimpleDateFormat", "HardwareIds"})
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -108,11 +116,32 @@ public class TraceActivity extends AppCompatActivity implements NavigationView.O
         hourTo = findViewById(R.id.traceHourto);
         auth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance();
-        reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("locations");
-        polyLineRef = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("polyline");
+        reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("children");
+        polyLineRef = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("children");
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        childList = new ArrayList<>();
+        childList.add("Choisissez un enfant");
+        arrayAdapter = new ArrayAdapter<>(this , android.R.layout.simple_list_item_1 , childList);
+
+        dropdown = findViewById(R.id.trace_spinner);
+        dropdown.setAdapter(arrayAdapter);
+        getChildNames();
+        dropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                childName = childList.get(position);
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
 clear.setOnClickListener(v -> {
     System.out.println("poly line akal daka");
     for (int i = 0; i < latLngs.size() - 1; i++) {
@@ -154,39 +183,41 @@ trace.setOnClickListener(v -> {
         @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         public void onDataChange(@NonNull DataSnapshot snapshot) {
-           snapshot.getChildren().forEach( ds -> {
-                try {
-                    String myDate = ds.getKey();
-                String rightDate = myDate.replaceAll("\\-", "/");
+           snapshot.getChildren().forEach( ds -> ds.child("polyline").getChildren().forEach(dt ->{
+           String myDate = dt.getKey();
+       String rightDate = myDate.replaceAll("\\-", "/");
 System.out.println(rightDate + "here is my date");
-                    @SuppressLint("SimpleDateFormat") Date date = new SimpleDateFormat("dd/MM/yyyy").parse(rightDate);
-                    if (date.compareTo(dateF) == 0 || date.compareTo(dateT) ==0 ||
-                            date.after(dateF) && date.before(dateT))
-                    {
-                        ds.getChildren().forEach( h -> {
-                                    try {
-                                        MyLocation location;
-                                        @SuppressLint("SimpleDateFormat")
-                                      Date  dateHour = new SimpleDateFormat("HH:mm").parse(h.getKey());
-                                        if (dateHour.compareTo(hourF) == 0 || dateHour.compareTo(hourT) ==0
-                                                || dateHour.after(hourF) && dateHour.before(hourT))
-                                        {
-                                            location = h.getValue(MyLocation.class);
-                                            LatLng latLng = new LatLng(location.getLatitude() , location.getLongitude());
-                                            System.out.println("deta eranakana " + h.child("latitude").getValue(Double.class).toString());
-                                          latLngs.add(latLng);
-                                        }
-                                    } catch (ParseException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                        );
-                    }
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-            });
-        }
+               @SuppressLint("SimpleDateFormat") Date date = null;
+               try {
+                   date = new SimpleDateFormat("dd/MM/yyyy").parse(rightDate);
+               } catch (ParseException e) {
+                   e.printStackTrace();
+               }
+               if (date.compareTo(dateF) == 0 || date.compareTo(dateT) ==0 ||
+                   date.after(dateF) && date.before(dateT))
+           {
+               dt.getChildren().forEach( h -> {
+                           try {
+                               MyLocation location;
+                               @SuppressLint("SimpleDateFormat")
+                             Date  dateHour = new SimpleDateFormat("HH:mm").parse(h.getKey());
+                               if (dateHour.compareTo(hourF) == 0 || dateHour.compareTo(hourT) ==0
+                                       || dateHour.after(hourF) && dateHour.before(hourT))
+                               {
+                                   location = h.getValue(MyLocation.class);
+                                   LatLng latLng = new LatLng(location.getLatitude() , location.getLongitude());
+                                   System.out.println("deta eranakana " + h.child("latitude").getValue(Double.class).toString());
+                                 latLngs.add(latLng);
+                               }
+                           } catch (ParseException e) {
+                               e.printStackTrace();
+                           }
+                       }
+               );
+           }
+       } ));
+           }
+
         @Override
         public void onCancelled(@NonNull DatabaseError error) {
         }
@@ -398,5 +429,21 @@ System.out.println(rightDate + "here is my date");
         background.draw(canvas);
         vectorDrawable.draw(canvas);
         return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+    private void getChildNames() {
+        reference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot ds:snapshot.getChildren())
+                {
+                    childList.add(ds.getKey());
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 }

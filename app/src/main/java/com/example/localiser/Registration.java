@@ -25,7 +25,7 @@ import com.google.firebase.database.FirebaseDatabase;
 public class Registration extends AppCompatActivity {
 
     private Button incription , retour;
-    private EditText nom , prenom , email , password;
+    private EditText nom , prenom , email , password , number;
     private FirebaseAuth mAuth;
     private DatabaseReference reference;
     private String deviceId;
@@ -41,6 +41,7 @@ public class Registration extends AppCompatActivity {
         nom = findViewById(R.id.nomEdit);
         prenom = findViewById(R.id.prenomEdit);
         email = findViewById(R.id.emailEditReg);
+        number = findViewById(R.id.numTel);
         password = findViewById(R.id.passEditReg);
         retour = findViewById(R.id.backLog);
 
@@ -69,6 +70,7 @@ public class Registration extends AppCompatActivity {
         String nom = this.nom.getText().toString().trim();
         String prenom = this.prenom.getText().toString().trim();
         String password = this.password.getText().toString().trim();
+        String num = this.number.getText().toString().trim();
 
         if (nom.isEmpty()){
             this.nom.setError("Écrivez votre nom");
@@ -102,13 +104,18 @@ return;
             this.email.setError("Votre email n'est pas correct");
             this.email.requestFocus();
         }
+        if (!num.isEmpty())
+        {
+            this.number.setError("Veuillez entrer votre mot de passe");
+            this.number.requestFocus();
+        }
         mAuth.createUserWithEmailAndPassword(email , password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         System.out.println("shaw");
                        deviceId = Settings.Secure.getString(this.getContentResolver(),
                                 Settings.Secure.ANDROID_ID);
-                        User user = new User(nom, prenom, email, password);
+                        User user = new User(nom, prenom, email, password , num);
                         reference
                                 .child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("userDetails")
                                 .setValue(user);

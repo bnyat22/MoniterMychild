@@ -3,6 +3,7 @@ package com.example.localiser;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -13,15 +14,19 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -73,6 +78,10 @@ public class MapsActivity extends FragmentActivity implements NavigationView.OnN
     List<LatLng> latLngList = new ArrayList<>();
     List<Marker> markerList = new ArrayList<>();
     int red = 0,blue = 0,green = 0;
+    private Spinner dropdown;
+    private ArrayAdapter<String> stringArrayAdapter;
+    private List<String> listChild;
+    private String childName;
 
     //map elements
     private GoogleMap mMap;
@@ -96,20 +105,32 @@ public class MapsActivity extends FragmentActivity implements NavigationView.OnN
         yellowSeek = findViewById(R.id.seekYellow);
         greenSeek = findViewById(R.id.seekGreen);
         endroitText = findViewById(R.id.restrictionText);
-        from = findViewById(R.id.fromTime);
-        to = findViewById(R.id.toTime);
+       dropdown = findViewById(R.id.spinner_restriction);
+       listChild = new ArrayList<>();
+       listChild.add("Choisissez un enfant");
 
 
+       dropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+           @Override
+           public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+               childName = listChild.get(position);
 
+           }
 
-        polygonCheckbox = findViewById(R.id.checkPoly);
+           @Override
+           public void onNothingSelected(AdapterView<?> parent) {
+
+           }
+       });
+        stringArrayAdapter = new ArrayAdapter<>(this ,android.R.layout.simple_list_item_1 ,listChild);
+        dropdown.setAdapter(stringArrayAdapter);
+
+   polygonCheckbox = findViewById(R.id.checkPoly);
         endroitCheckBox = findViewById(R.id.specificEndroidCheck);
         endroitCheckBox.setOnCheckedChangeListener(((buttonView, isChecked) -> {
             if (isChecked) {
                  pop = new PopUpActivity(MapsActivity.this);
                 pop.show();
-
-
             }
         }));
         polygonCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -125,18 +146,30 @@ public class MapsActivity extends FragmentActivity implements NavigationView.OnN
             }
         });
         draw.setOnClickListener(v -> {
-            if (endroitCheckBox.isChecked())
-            {
-             putWeekHours();
+            if (childName != null) {
+                if (endroitCheckBox.isChecked()) {
+                    putWeekHours(childName);
                 } else {
-                if (polygon != null) polygon.remove();
-                PolygonOptions polygonOptions = new PolygonOptions().addAll(latLngList).clickable(true);
-                polygon = mMap.addPolygon(polygonOptions);
+                    if (polygon != null) polygon.remove();
+                    PolygonOptions polygonOptions = new PolygonOptions().addAll(latLngList).clickable(true);
+                    polygon = mMap.addPolygon(polygonOptions);
 
-                polygon.setStrokeColor(Color.rgb(red, green, blue));
-                if (polygonCheckbox.isChecked()) polygon.setFillColor(Color.rgb(red, green, blue));
-                reference.push().setValue(polygon);
-            } });
+                    polygon.setStrokeColor(Color.rgb(red, green, blue));
+                    if (polygonCheckbox.isChecked())
+                        polygon.setFillColor(Color.rgb(red, green, blue));
+                    reference.child(childName).child("polygons").push().setValue(polygon);
+                }
+            } else {
+                AlertDialog.Builder alert = new AlertDialog.Builder(this);
+                alert.setTitle("Attention");
+                alert.setMessage("il faut choisir un enfant à lui faire la restriction");
+                alert.setCancelable(true);
+                alert.setPositiveButton("Ok", (dialog, which) -> {
+
+                });
+            }
+        }
+        );
         clear.setOnClickListener(v -> {
             reference.removeValue();
             specificReference.removeValue();
@@ -155,8 +188,9 @@ public class MapsActivity extends FragmentActivity implements NavigationView.OnN
 //initialiser firebase elements
         auth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance();
-        reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("polygons");
-        specificReference = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("specific");
+        reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                .child("children");
+        specificReference = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("children");
 
         //initialiser map elements
         manager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -164,8 +198,26 @@ public class MapsActivity extends FragmentActivity implements NavigationView.OnN
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-
+        getChildNames();
     }
+
+    private void getChildNames() {
+        reference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot ds:snapshot.getChildren())
+                {
+                    listChild.add(ds.getKey());
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -182,7 +234,7 @@ public class MapsActivity extends FragmentActivity implements NavigationView.OnN
 
     }
 
-    private void putWeekHours()
+    private void putWeekHours(String childName)
     {
         String text = pop.getNom().getText().toString();
         if (polygon != null) polygon.remove();
@@ -191,55 +243,55 @@ public class MapsActivity extends FragmentActivity implements NavigationView.OnN
 
         polygon.setStrokeColor(Color.rgb(red , green , blue));
         if (polygonCheckbox.isChecked()) polygon.setFillColor(Color.rgb(red, green , blue));
-        specificReference.child(text).child("polygon").setValue(polygon);
+        specificReference.child(childName).child("specific").child(text).child("polygon").setValue(polygon);
         if (!pop.getDuLundi().getText().equals("")) {
-            specificReference.child(text).child("MONDAY").child("du").setValue(pop.getDuLundi().getText());
-            specificReference.child(text).child("MONDAY").child("a").setValue(pop.getaLundi().getText());
+            specificReference.child(childName).child("specific").child(text).child("MONDAY").child("du").setValue(pop.getDuLundi().getText().toString());
+            specificReference.child(childName).child("specific").child(text).child("MONDAY").child("a").setValue(pop.getaLundi().getText().toString());
         } else {
-            specificReference.child(text).child("MONDAY").child("du").setValue("nn");
-            specificReference.child(text).child("MONDAY").child("a").setValue("nn");
+            specificReference.child(childName).child("specific").child(text).child("MONDAY").child("du").setValue("nn");
+            specificReference.child(childName).child("specific").child(text).child("MONDAY").child("a").setValue("nn");
         }
-        if (!pop.getDuMardi().getText().equals("")) {
-            specificReference.child(text).child("TUESDAY").child("du").setValue(pop.getDuMardi().getText());
-            specificReference.child(text).child("TUESDAY").child("a").setValue(pop.getaMardi().getText());
+        if (!pop.getDuMardi().getText().toString().equals("")) {
+            specificReference.child(childName).child("specific").child(text).child("TUESDAY").child("du").setValue(pop.getDuMardi().getText().toString());
+            specificReference.child(childName).child("specific").child(text).child("TUESDAY").child("a").setValue(pop.getaMardi().getText().toString());
         }  else {
-            specificReference.child(text).child("TUESDAY").child("du").setValue("nn");
-            specificReference.child(text).child("TUESDAY").child("a").setValue("nn");
+            specificReference.child(childName).child("specific").child(text).child("TUESDAY").child("du").setValue("nn");
+            specificReference.child(childName).child("specific").child(text).child("TUESDAY").child("a").setValue("nn");
         }
-        if (!pop.getaMercredi().getText().equals("")) {
-            specificReference.child(text).child("WEDNESDAY").child("du").setValue(pop.getDuMercredi().getText());
-            specificReference.child(text).child("WEDNESDAY").child("a").setValue(pop.getaMercredi().getText());
+        if (!pop.getaMercredi().getText().toString().equals("")) {
+            specificReference.child(childName).child("specific").child(text).child("WEDNESDAY").child("du").setValue(pop.getDuMercredi().getText().toString());
+            specificReference.child(childName).child("specific").child(text).child("WEDNESDAY").child("a").setValue(pop.getaMercredi().getText().toString());
         }  else {
-            specificReference.child(text).child("WEDNESDAY").child("du").setValue("nn");
-            specificReference.child(text).child("WEDNESDAY").child("a").setValue("nn");
+            specificReference.child(childName).child("specific").child(text).child("WEDNESDAY").child("du").setValue("nn");
+            specificReference.child(childName).child("specific").child(text).child("WEDNESDAY").child("a").setValue("nn");
         }
-        if (!pop.getDuJeudi().getText().equals("")) {
-            specificReference.child(text).child("THURSDAY").child("du").setValue(pop.getDuJeudi().getText());
-            specificReference.child(text).child("THURSDAY").child("a").setValue(pop.getaJeudi().getText());
+        if (!pop.getDuJeudi().getText().toString().equals("")) {
+            specificReference.child(childName).child("specific").child(text).child("THURSDAY").child("du").setValue(pop.getDuJeudi().getText().toString());
+            specificReference.child(childName).child("specific").child(text).child("THURSDAY").child("a").setValue(pop.getaJeudi().getText().toString());
         }  else {
-            specificReference.child(text).child("THURSDAY").child("du").setValue("nn");
-            specificReference.child(text).child("THURSDAY").child("a").setValue("nn");
+            specificReference.child(childName).child("specific").child(text).child("THURSDAY").child("du").setValue("nn");
+            specificReference.child(childName).child("specific").child(text).child("THURSDAY").child("a").setValue("nn");
         }
-        if (!pop.getDuVendredi().getText().equals("")) {
-            specificReference.child(text).child("FRIDAY").child("du").setValue(pop.getDuVendredi().getText());
-            specificReference.child(text).child("FRIDAY").child("a").setValue(pop.getaVendredi().getText());
+        if (!pop.getDuVendredi().getText().toString().equals("")) {
+            specificReference.child(childName).child("specific").child(text).child("FRIDAY").child("du").setValue(pop.getDuVendredi().getText().toString());
+            specificReference.child(childName).child("specific").child(text).child("FRIDAY").child("a").setValue(pop.getaVendredi().getText().toString());
         }  else {
-            specificReference.child(text).child("FRIDAY").child("du").setValue("nn");
-            specificReference.child(text).child("FRIDAY").child("a").setValue("nn");
+            specificReference.child(childName).child("specific").child(text).child("FRIDAY").child("du").setValue("nn");
+            specificReference.child(childName).child("specific").child(text).child("FRIDAY").child("a").setValue("nn");
         }
-        if (!pop.getDuSamedi().getText().equals("")) {
-            specificReference.child(text).child("SATURDAY").child("du").setValue(pop.getDuSamedi().getText());
-            specificReference.child(text).child("SATURDAY").child("a").setValue(pop.getaSamedi().getText());
+        if (!pop.getDuSamedi().getText().toString().equals("")) {
+            specificReference.child(childName).child("specific").child(text).child("SATURDAY").child("du").setValue(pop.getDuSamedi().getText().toString());
+            specificReference.child(childName).child("specific").child(text).child("SATURDAY").child("a").setValue(pop.getaSamedi().getText().toString());
         }  else {
-            specificReference.child(text).child("SATURDAY").child("du").setValue("nn");
-            specificReference.child(text).child("SATURDAY").child("a").setValue("nn");
+            specificReference.child(childName).child("specific").child(text).child("SATURDAY").child("du").setValue("nn");
+            specificReference.child(childName).child("specific").child(text).child("SATURDAY").child("a").setValue("nn");
         }
-        if (!pop.getDuSamedi().getText().equals("")) {
-            specificReference.child(text).child("SUNDAY").child("du").setValue(pop.getDuDimanche().getText());
-            specificReference.child(text).child("SUNDAY").child("a").setValue(pop.getaDimanche().getText());
+        if (!pop.getDuSamedi().getText().toString().equals("")) {
+            specificReference.child(childName).child("specific").child(text).child("SUNDAY").child("du").setValue(pop.getDuDimanche().getText().toString());
+            specificReference.child(childName).child("specific").child(text).child("SUNDAY").child("a").setValue(pop.getaDimanche().getText().toString());
         }  else {
-            specificReference.child(text).child("SUNDAY").child("du").setValue("nn");
-            specificReference.child(text).child("SUNDAY").child("a").setValue("nn");
+            specificReference.child(childName).child("specific").child(text).child("SUNDAY").child("du").setValue("nn");
+            specificReference.child(childName).child("specific").child(text).child("SUNDAY").child("a").setValue("nn");
         }
 
 

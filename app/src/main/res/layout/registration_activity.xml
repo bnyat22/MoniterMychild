@@ -3,7 +3,32 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:layout_editor_absoluteX="3dp"
+    tools:layout_editor_absoluteY="113dp">
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/numTel"
+        android:layout_width="365dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="28dp"
+        android:layout_marginTop="420dp"
+        android:hint="Entrez votre numéro de téléphone"
+        android:inputType="textPassword"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/nomText" />
+
+    <TextView
+        android:id="@+id/passTextReg2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="28dp"
+        android:layout_marginTop="136dp"
+        android:text="numero téléphone"
+
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/emailEditReg" />
 
     <View
         android:id="@+id/view"
@@ -71,12 +96,24 @@
         android:id="@+id/passEditReg"
         android:layout_width="365dp"
         android:layout_height="52dp"
-        android:layout_marginStart="32dp"
+        android:layout_marginStart="28dp"
         android:layout_marginTop="320dp"
         android:hint="@string/passE"
         android:inputType="textPassword"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/nomText" />
+
+    <TextView
+        android:id="@+id/passTextReg"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="28dp"
+        android:layout_marginTop="36dp"
+        android:text="@string/pass"
+
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/emailEditReg" />
 
     <TextView
         android:id="@+id/textView8"
@@ -100,24 +137,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/prenomEdit" />
 
-    <TextView
-        android:id="@+id/passTextReg"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="36dp"
-        android:text="@string/pass"
-
-        android:textSize="18sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/emailEditReg" />
-
     <Button
         android:id="@+id/inscBut"
         android:layout_width="133dp"
         android:layout_height="45dp"
         android:layout_marginStart="136dp"
-        android:layout_marginTop="18dp"
+        android:layout_marginTop="128dp"
         android:text="@string/insBut"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/passEditReg" />
@@ -127,7 +152,7 @@
         android:layout_width="133dp"
         android:layout_height="45dp"
         android:layout_marginStart="136dp"
-        android:layout_marginTop="62dp"
+        android:layout_marginTop="172dp"
         android:text="@string/backtoLogin"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/passEditReg" />

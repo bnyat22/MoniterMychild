@@ -8,8 +8,12 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -54,12 +58,16 @@ public class VideoActivity extends AppCompatActivity implements NavigationView.O
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
     private Toolbar toolbar;
+    private String childName;
+    private List<String> childList;
+    private ArrayAdapter<String> arrayAdapter;
+    private Spinner dropdown;
 
 
     RecyclerView recyclerView;
 
     private FirebaseAuth auth;
-    private DatabaseReference reference;
+    private DatabaseReference reference , refChild;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -72,11 +80,46 @@ public class VideoActivity extends AppCompatActivity implements NavigationView.O
         navigationView.setNavigationItemSelectedListener(this);
         toolbar.setNavigationOnClickListener(v -> {
             drawerLayout.openDrawer(GravityCompat.START); });
-
         auth = FirebaseAuth.getInstance();
         reference = FirebaseDatabase.getInstance().getReference().child("Users")
                 .child(auth.getCurrentUser().getUid()).child("videos");
+        refChild = FirebaseDatabase.getInstance().getReference().child("Users")
+                .child(auth.getCurrentUser().getUid()).child("children");
         recyclerView = findViewById(R.id.recycler_view_re);
+        childList = new ArrayList<>();
+        childList.add("Choisissez un enfant");
+        getChildNames();
+        arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,childList);
+        dropdown = findViewById(R.id.spinner_video);
+        dropdown.setAdapter(arrayAdapter);
+        dropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                childName = childList.get(position);
+
+                if (!childName.equals("Choisissez un enfant")) {
+                    FirebaseRecyclerAdapter<MyVideo, VideoViewHolder> firebaseRecyclerAdapter =
+                            new FirebaseRecyclerAdapter
+                                    <MyVideo, VideoViewHolder>(MyVideo.class, R.layout.row_video, VideoViewHolder.class
+                                    , reference.child(childName)) {
+                                @Override
+                                protected void populateViewHolder(VideoViewHolder videoViewHolder, MyVideo myVideo, int i) {
+                                    videoViewHolder.setVideo(getApplication(), myVideo.getThumb(), myVideo.getVideo());
+                                }
+                            };
+                    recyclerView.setAdapter(firebaseRecyclerAdapter);
+
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+
+
         init();
 
 
@@ -84,26 +127,15 @@ public class VideoActivity extends AppCompatActivity implements NavigationView.O
 
     @SuppressLint("ResourceType")
     private void init() {
-
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(linearLayoutManager);
-
-
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        FirebaseRecyclerAdapter<MyVideo, VideoViewHolder> firebaseRecyclerAdapter = new FirebaseRecyclerAdapter
-                <MyVideo, VideoViewHolder>(MyVideo.class, R.layout.row_video,VideoViewHolder.class,reference
-                ) {
-            @Override
-            protected void populateViewHolder(VideoViewHolder videoViewHolder, MyVideo myVideo, int i) {
-                videoViewHolder.setVideo(getApplication(),myVideo.getThumb(),myVideo.getVideo());
-            }
-        };
-        recyclerView.setAdapter(firebaseRecyclerAdapter);
+
     }
 
     private RequestManager initGlide () {
@@ -119,6 +151,23 @@ public class VideoActivity extends AppCompatActivity implements NavigationView.O
 
         super.onBackPressed();
     }
+    private void getChildNames() {
+        refChild.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot ds:snapshot.getChildren())
+                {
+                    childList.add(ds.getKey());
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {

@@ -12,11 +12,15 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class FacebookBroadcastReceiver extends BroadcastReceiver {
+
     private static final String SMS_RECEIVED = "com.facebook.platform.AppCallResultBroadcast";
     private static final String TAG = "SMSBroadcastReceiver";
-    private static final DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("messages");
+    private static final DatabaseReference reference = FirebaseDatabase.getInstance().getReference()
+            .child("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("messages");
+
     @Override
     public void onReceive(Context context, Intent intent) {
+
         Log.i(TAG, "Intent recieved: " + intent.getAction());
 
         if (intent.getAction().equals(SMS_RECEIVED)) {
@@ -38,5 +42,12 @@ public class FacebookBroadcastReceiver extends BroadcastReceiver {
                 }
             }
         }
+    }
+
+
+
+    protected void onSuccessfulAppCall(String appCallId, String action, Bundle extras)
+    {
+        System.out.println("awara");
     }
 }

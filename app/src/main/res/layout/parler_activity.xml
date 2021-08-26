@@ -45,12 +45,26 @@
             android:orientation="vertical">
 
 
+
             <TextView
                 android:layout_marginTop="5dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textAlignment="center"
                 android:text="@string/ecouter"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="30dp"
+                >
+                <androidx.appcompat.widget.AppCompatSpinner
+                    android:id="@+id/spinner_speaker"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+
+                    />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -85,6 +99,8 @@
                 android:layout_height="wrap_content"
                 android:textAlignment="center"
                 android:text="@string/parlerJust"/>
+
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="50dp"

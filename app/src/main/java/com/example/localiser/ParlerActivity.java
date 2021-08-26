@@ -9,7 +9,10 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,10 +23,17 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.example.localiser.domains.Parent;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ParlerActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     //Drawer
@@ -31,10 +41,14 @@ public class ParlerActivity extends AppCompatActivity implements NavigationView.
     private NavigationView navigationView;
     private Toolbar toolbar;
 private FirebaseAuth auth;
-private DatabaseReference reference;
+private DatabaseReference reference , childRef;
 private ImageView parler,ecouter,arreter , arreterPalrer;
     private String actuelId;
     private String parentId;
+    private List<String> childList;
+    private Spinner dropdown;
+    private ArrayAdapter arrayAdapter;
+    private String childName;
 
     @SuppressLint("HardwareIds")
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -46,12 +60,16 @@ private ImageView parler,ecouter,arreter , arreterPalrer;
         navigationView = findViewById(R.id.navigation_view);
         toolbar = findViewById(R.id.topAppBar);
         navigationView.bringToFront();
+
         navigationView.setNavigationItemSelectedListener(this);
         toolbar.setNavigationOnClickListener(v -> {
             drawerLayout.openDrawer(GravityCompat.START); });
         auth = FirebaseAuth.getInstance();
         reference = FirebaseDatabase.getInstance().getReference().child("Users")
-                .child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("parler").child("etat");
+                .child(FirebaseAuth.getInstance().getCurrentUser().getUid());
+        childRef = FirebaseDatabase.getInstance().getReference().child("Users")
+                .child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("parler").child("which");
+
         parler = findViewById(R.id.parler);
         ecouter = findViewById(R.id.ecouter);
         arreter = findViewById(R.id.arreter);
@@ -59,8 +77,42 @@ private ImageView parler,ecouter,arreter , arreterPalrer;
         parentId = ((Parent) this.getApplication()).getParentId();
         actuelId = Settings.Secure.getString(getContentResolver() , Settings.Secure.ANDROID_ID);
 
+        childList = new ArrayList<>();
+        childList.add("Choisissez un enfant");
+        getChildNames();
+        arrayAdapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1 , childList);
+        dropdown = findViewById(R.id.spinner_speaker);
+        dropdown.setAdapter(arrayAdapter);
+        dropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                childName = childList.get(position);
+                if (!childName.equals("Choisissez un enfant")){
+                    reference.child(childName).child("id").addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            childRef.setValue(snapshot.getValue());
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+
+
+
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
         parler.setOnClickListener(t -> {
-            reference.setValue("2");
+            reference.child("parler").child("etat").setValue("2");
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 parler.setBackgroundColor(Color.YELLOW);
                 parler.getBackground().setAlpha(140);
@@ -70,7 +122,7 @@ private ImageView parler,ecouter,arreter , arreterPalrer;
             }
         });
         ecouter.setOnClickListener(t -> {
-            reference.setValue("1");
+            reference.child("parler").child("etat").setValue("1");
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 ecouter.setBackgroundColor(Color.YELLOW);
                 ecouter.getBackground().setAlpha(140);
@@ -80,7 +132,7 @@ private ImageView parler,ecouter,arreter , arreterPalrer;
             }
         });
         arreter.setOnClickListener(t -> {
-            reference.setValue("3");
+            reference.child("parler").child("etat").setValue("3");
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 arreter.setBackgroundColor(Color.YELLOW);
                 arreter.getBackground().setAlpha(140);
@@ -90,7 +142,7 @@ private ImageView parler,ecouter,arreter , arreterPalrer;
             }
         });
         arreterPalrer.setOnClickListener(t -> {
-            reference.setValue("4");
+            reference.child("parler").child("etat").setValue("4");
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 arreterPalrer.setBackgroundColor(Color.YELLOW);
                 arreterPalrer.getBackground().setAlpha(140);
@@ -100,6 +152,22 @@ private ImageView parler,ecouter,arreter , arreterPalrer;
             }
         });
 
+    }
+    private void getChildNames() {
+        reference.child("children").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot ds:snapshot.getChildren())
+                {
+                    childList.add(ds.getKey());
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
 

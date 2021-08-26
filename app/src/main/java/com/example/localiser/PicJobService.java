@@ -1,5 +1,6 @@
 package com.example.localiser;
 
+import android.annotation.SuppressLint;
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.app.job.JobScheduler;
@@ -12,18 +13,23 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+import com.example.localiser.domains.Parent;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -35,7 +41,8 @@ import java.util.List;
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class PicJobService extends JobService {
     private  static StorageReference storageReference;
-    private  static DatabaseReference reference;
+    private  static DatabaseReference reference , refChild;
+    private static String parentId , actuelId;
     private  static FirebaseAuth auth;
     JobParameters mRunningParams;
     final Handler mHandler = new Handler();
@@ -101,11 +108,16 @@ public class PicJobService extends JobService {
         return false;
     }
 
+    @SuppressLint("HardwareIds")
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public static void startJobService(Context context) {
         auth = FirebaseAuth.getInstance();
         reference = FirebaseDatabase.getInstance().getReference().child("Users").child(auth.getCurrentUser().getUid()).child("images");
+        refChild = FirebaseDatabase.getInstance().getReference().child("Users").child(auth.getCurrentUser().getUid()).child("children");
         storageReference = FirebaseStorage.getInstance().getReference();
+         actuelId = Settings.Secure.getString(context.getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+         parentId = ((Parent) context.getApplicationContext()).getParentId();
+
         Log.d(TAG, "registerJob(): JobService init");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!isRegistered(context)) {
@@ -220,7 +232,24 @@ public class PicJobService extends JobService {
 
                                     st.putFile(uri).addOnSuccessListener(taskSnapshot -> taskSnapshot.getStorage()
                                             .getDownloadUrl().addOnSuccessListener(uri1 -> {
-                                        this.reference.push().setValue(uri1.toString());
+                                                refChild.addListenerForSingleValueEvent(new ValueEventListener() {
+                                                    @Override
+                                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                                        snapshot.getChildren().forEach((dataSnapshot -> {
+                                                            System.out.println("rsmm " + dataSnapshot.getKey());
+                                                            if (actuelId.equals(dataSnapshot.child("id").getValue()))
+                                                                reference.child(dataSnapshot.getKey())
+                                                                        .push().setValue(uri1.toString());
+                                                        }));
+
+                                                    }
+
+                                                    @Override
+                                                    public void onCancelled(@NonNull DatabaseError error) {
+
+                                                    }
+                                                });
+
                                     }));
 
 

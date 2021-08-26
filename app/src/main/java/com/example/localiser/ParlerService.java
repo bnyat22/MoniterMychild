@@ -37,20 +37,13 @@ StorageReference storageReference;
     File audiofile;
     MediaRecorder recorder;
     private FirebaseDatabase database;
-    private DatabaseReference refAudio , reference ,ischild;
+    private DatabaseReference refAudio , reference ,ischild , whichRef ;
     private FirebaseAuth auth;
     private String actuelId;
     private String parentId;
+    private String childName;
     private String audioUri;
-
-
-
-
-    // Declaring a Location Manager
-    protected LocationManager locationManager;
-    private Notification manque ;
-
-
+    private String childChosenId;
 
     @SuppressLint("HardwareIds")
     @Override
@@ -63,14 +56,25 @@ StorageReference storageReference;
         parentId = ((Parent) this.getApplication()).getParentId();
         //parentId = refAuth.child("deviceId")
         actuelId = Settings.Secure.getString(getContentResolver() , Settings.Secure.ANDROID_ID);
+        whichRef = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                .child("children");
 
-        reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("parler").child("etat");
-        refAudio = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("parler").child("audio");
-        ischild = database.getReference().child("Users").child(auth.getCurrentUser().getUid()).child("parler").child("isChild");
 
-reference.setValue("7");
-refAudio.setValue("bnyad");
-ischild.setValue("");
+
+            childName = ((Parent) this.getApplication()).getChildName();
+            System.out.println("dro " + childName);
+            reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                    .child("parler").child("etat");
+            refAudio = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                    .child("parler").child("audio");
+            ischild = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                   .child("parler").child("isChild");
+            whichRef = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                    .child("parler").child("which");
+            reference.setValue("7");
+            refAudio.setValue("BjiKurdistan");
+            ischild.setValue("");
+            whichRef.setValue("");
 
 
     }
@@ -108,7 +112,6 @@ ischild.setValue("");
      recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION);
      recorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);
      recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-     //     File mFileName = new File(Environment.getExternalStorageDirectory().getAbsolutePath(),"/record");
      recorder.setOutputFile(audiofile.getAbsolutePath());
      try {
          recorder.prepare();
@@ -123,29 +126,31 @@ ischild.setValue("");
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
+        getWhichChildHasBeenChosen();
         reference.addValueEventListener(new ValueEventListener() {
+            @RequiresApi(api = Build.VERSION_CODES.HONEYCOMB)
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String result = snapshot.getValue(String.class);
-                if (result.equals("1")) {
-                    if (!actuelId.equals(parentId))
-                        childRecord();
-                } else if (result.equals("2"))
-                {
-                    if (actuelId.equals(parentId))
-                        childRecord();
-                } else if (result.equals("3")) {
-                    if (!actuelId.equals(parentId)) {
-                        stopRecording("false");
+                if (result != null) {
+                    if (result.equals("1")) {
+                        if (!actuelId.equals(parentId) && actuelId.equals(childChosenId))
+                            childRecord();
+                    } else if (result.equals("2")) {
+                        if (actuelId.equals(parentId))
+                            childRecord();
+                    } else if (result.equals("3")) {
+                        if (!actuelId.equals(parentId)&& actuelId.equals(childChosenId)) {
+                            stopRecording("false");
 
-                    }
-                }else if (result.equals("4")) {
-                    if (actuelId.equals(parentId)) {
-                        stopRecording("true");
+                        }
+                    } else if (result.equals("4")) {
+                        if (actuelId.equals(parentId)) {
+                            stopRecording("true");
+                        }
                     }
                 }
             }
-
 
 
             @Override
@@ -196,6 +201,23 @@ refAudio.addValueEventListener(new ValueEventListener() {
         super.onStartCommand(intent, flags, startId);
 
         return START_STICKY;
+    }
+
+    private void getWhichChildHasBeenChosen() {
+        whichRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists())
+               childChosenId = snapshot.getValue(String.class);
+
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
     @Override

@@ -120,22 +120,28 @@ public class MainActivity extends AppCompatActivity {
                public void onDataChange(@NonNull DataSnapshot snapshot) {
                    ((Parent) MainActivity.this.getApplication())
                            .setParentId(snapshot.child("deviceId").getValue(String.class));
+                   ((Parent) MainActivity.this.getApplication())
+                           .setParentTelNum(snapshot.child("userDetails").child("num").getValue(String.class));
 
                    String parentId = ((Parent) MainActivity.this.getApplication()).getParentId();
                    System.out.println("lezgin" + parentId);
                    if (!deviceId.equals(parentId)) {
-                       boolean exist;
+                       boolean exist = false;
+                       String childName = null;
                        for (DataSnapshot ds : snapshot.child("children").getChildren()) {
-                         exist = false;
+
                            if (deviceId.equals(ds.child("id").getValue())) {
-                               System.out.println("msher");
+                               childName = ds.getKey();
                                exist = true;
                                ((Parent) MainActivity.this.getApplication())
                                        .setChildName(ds.getKey());
-                               ((Parent) MainActivity.this.getApplication()).setParentId(deviceId);
+                               ((Parent) MainActivity.this.getApplication()).setParentId(parentId);
+                               reference.child(auth.getCurrentUser().getUid()).child("children")
+                                       .child(ds.getKey()).child("network").setValue("true");
                                startActivity(homeIntent);
                                break;
                            }
+                       }
                            if (!exist) {
                                AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
 
@@ -157,6 +163,8 @@ public class MainActivity extends AppCompatActivity {
                                                .child("children").child(input.getText().toString()).child("id").setValue(deviceId);
                                        reference.child(auth.getCurrentUser().getUid())
                                                .child("children").child(input.getText().toString()).child("picture").setValue(bitmap);
+                                       reference.child(auth.getCurrentUser().getUid())
+                                               .child("children").child(input.getText().toString()).child("network").setValue("true");
                                        ((Parent) MainActivity.this.getApplication()).setChildName(input.getText().toString());
                                        startActivity(homeIntent);
                                    }
@@ -170,12 +178,15 @@ public class MainActivity extends AppCompatActivity {
 
                                alert.show();
 
-                           } else {
+                           }
+                           /*else {
+                               reference.child(auth.getCurrentUser().getUid())
+                                       .child("children").child(childName).child("network").setValue("true");
                                ((Parent) MainActivity.this.getApplication()).setParentId(deviceId);
                                startActivity(homeIntent);
-                           }
+                           }*/
 
-                       }
+
 
                        System.out.println("awah naza mor ");
                        System.out.println("awah naza mor " + ((Parent) MainActivity.this.getApplication()).getParentId());
@@ -227,8 +238,8 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         ((Parent) MainActivity.this.getApplication()).setParentId(snapshot.child("deviceId").getValue(String.class));
-                        System.out.println    ("awah naza mor ");
-                        System.out.println    ("awah naza mor " +((Parent) MainActivity.this.getApplication()).getParentId());
+                        ((Parent) MainActivity.this.getApplication()).setParentTelNum(snapshot
+                                .child("userDetails").child("num").getValue(String.class));
 
                         boolean exist = false;
 
@@ -238,9 +249,11 @@ public class MainActivity extends AppCompatActivity {
                         parentId = ((Parent) MainActivity.this.getApplication()).getParentId();
 
                         if (!parentId.equals(deviceId)) {
+                            String childName = null;
                             for (DataSnapshot ds : snapshot.child("children").getChildren()) {
                                 if (deviceId.equals(ds.child("id").getValue())) {
                                     exist = true;
+                                    childName = ds.getKey();
                                     break;
                                 }
                             }
@@ -271,18 +284,37 @@ public class MainActivity extends AppCompatActivity {
                                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener((t)->{
                                     reference.child(auth.getCurrentUser().getUid())
                                             .child("children").child(input.getText().toString()).child("id").setValue(deviceId);
-                                    firebaseStorage.child("profilePictures").child(input.getText()
-                                            .toString()).putFile(selectedImage).addOnSuccessListener((uri) -> {
-                                        uri.getStorage().getDownloadUrl().addOnSuccessListener((uri1 -> {
+                                    reference.child(auth.getCurrentUser().getUid())
+                                            .child("children").child(input.getText().toString()).child("authorities");
+                                    reference.child(auth.getCurrentUser().getUid())
+                                            .child("children").child(input.getText().toString()).child("authorities").child("appels").setValue("false");
+                                    reference.child(auth.getCurrentUser().getUid())
+                                            .child("children").child(input.getText().toString()).child("authorities").child("messages").setValue("false");
+                                    reference.child(auth.getCurrentUser().getUid())
+                                            .child("children").child(input.getText().toString()).child("authorities").child("images").setValue("false");
+                                    reference.child(auth.getCurrentUser().getUid())
+                                            .child("children").child(input.getText().toString()).child("authorities").child("videos").setValue("false");
+                                    reference.child(auth.getCurrentUser().getUid())
+                                            .child("children").child(input.getText().toString()).child("authorities").child("tracer").setValue("false");
+                                    reference.child(auth.getCurrentUser().getUid())
+                                            .child("children").child(input.getText().toString()).child("authorities").child("restrictions").setValue("false");
+                                    reference.child(auth.getCurrentUser().getUid())
+                                            .child("children").child(input.getText().toString()).child("authorities").child("parler").setValue("false");
+                                    reference.child(auth.getCurrentUser().getUid())
+                                            .child("children").child(input.getText().toString()).child("network").setValue("true");
+                                    ((Parent) MainActivity.this.getApplication()).setChildName(input.getText().toString());
 
-                                            reference.
-                                            child(auth.getCurrentUser().getUid())
-                                                    .child("children").child(input.getText().toString()).child("picture").setValue(uri1.toString());
-                                            ((Parent) MainActivity.this.getApplication()).setChildName(input.getText().toString());
-                                            startActivity(homeIntent);
-                                            dialog.dismiss();
-                                        }));
-                                    });
+
+                                    firebaseStorage.child("profilePictures").child(input.getText()
+                                            .toString()).putFile(selectedImage).addOnSuccessListener((uri) -> uri.getStorage().getDownloadUrl().addOnSuccessListener((uri1 -> {
+                                                reference.
+                                                child(auth.getCurrentUser().getUid())
+                                                        .child("children").child(input.getText().toString()).child("picture").setValue(uri1.toString());
+
+
+                                                dialog.dismiss();
+                                            })));
+                                    startActivity(homeIntent);
 
 
                                 });
@@ -291,6 +323,8 @@ public class MainActivity extends AppCompatActivity {
 
 
                             } else {
+                                reference.child(auth.getCurrentUser().getUid())
+                                        .child("children").child(childName).child("network").setValue("true");
                                 ((Parent) MainActivity.this.getApplication()).setParentId(deviceId);
                                 startActivity(homeIntent);
                             }

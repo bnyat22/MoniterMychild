@@ -1,7 +1,8 @@
 package com.example.localiser;
 
-import android.Manifest;
+
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -11,85 +12,73 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Looper;
 import android.provider.Settings;
-import android.widget.Toast;
+import android.telephony.SmsManager;
+import android.util.Log;
 
-import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.ServiceCompat;
-
 import com.example.localiser.domains.Parent;
-import com.google.android.gms.common.api.GoogleApi;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class GpsTracker extends Service {
 
-    //  private final Context mContext;
 
-    //
-    //private GoogleApi googleApi;
-    private NotificationManager notificationManager;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
 
     private FirebaseDatabase database;
-    private DatabaseReference refAuth , reference, polyLineRef;
+    private DatabaseReference refChild , reference, polyLineRef;
     private FirebaseAuth auth;
     private String actuelId;
     private String parentId;
     private String childName;
-
-
-
-
-    // Declaring a Location Manager
-    protected LocationManager locationManager;
-   private Notification manque ;
-
-
+    private String parentTelNumber;
+    private boolean sendMeesage;
+  //  private Map<String , > locationList;
 
     @SuppressLint("HardwareIds")
     @Override
     public void onCreate() {
 
 auth = FirebaseAuth.getInstance();
-        System.out.println("xo deya era bram?");
+
         database = FirebaseDatabase.getInstance();
         parentId = ((Parent) this.getApplication()).getParentId();
         childName = ((Parent) this.getApplication()).getChildName();
-        //parentId = refAuth.child("deviceId")
+        parentTelNumber = ((Parent) this.getApplication()).getParentTelNum();
+        sendMeesage = false;
+
+
         actuelId = Settings.Secure.getString(getContentResolver() , Settings.Secure.ANDROID_ID);
 
         if (auth.getCurrentUser().getUid() != null) {
             if (!parentId.equals(actuelId)) {
                 reference = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
                         .child("children").child(childName).child("locations");
+                refChild = database.getReference().child("Users").child(auth.getCurrentUser().getUid())
+                        .child("children").child(childName);
 
                 polyLineRef = database.getReference().child("Users")
                         .child(auth.getCurrentUser().getUid())
@@ -98,7 +87,6 @@ auth = FirebaseAuth.getInstance();
         }
 
 
-        //  getLocationUpdate();
         System.out.println("parent " + parentId);
         if (!actuelId.equals(parentId)) {
             System.out.println("Mandy ");
@@ -121,8 +109,29 @@ auth = FirebaseAuth.getInstance();
             @Override
             public void onLocationResult(LocationResult locationResult) {
                 System.out.println("ddeya era bram?");
-                reference.setValue(locationResult.getLastLocation());
+                ((Parent) GpsTracker.this.getApplication()).setLat(locationResult.getLastLocation().getLatitude());
+                ((Parent) GpsTracker.this.getApplication()).setLongt(locationResult.getLastLocation().getLongitude());
+                if (!checkNetworkConnectivity())
+                {
 
+
+                    if (!sendMeesage) {
+                        Intent intent = new Intent(getApplicationContext(), GpsTracker.class);
+                        PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
+                        SmsManager smsManager = SmsManager.getDefault();
+
+
+                        smsManager.sendTextMessage(parentTelNumber, null,
+                                childName + "," + "Je n'ai plus de réseaux", pi, null);
+                        sendMeesage = true;
+                    }
+
+
+                } else {
+                    sendMeesage = false;
+                    refChild.child("network").setValue("true");
+                    reference.setValue(locationResult.getLastLocation());
+                }
                 @SuppressLint("SimpleDateFormat") String timeStamp = new SimpleDateFormat("dd-MM-yyyy_HH:mm")
                         .format(Calendar.getInstance().getTime());
                 String[] dates = timeStamp.split("_");
@@ -132,12 +141,12 @@ auth = FirebaseAuth.getInstance();
     }
     public GpsTracker() {
     }
-
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-
         createNotificationChannel();
+
         Intent notificationIntent = new Intent(this, Home.class);
 
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
@@ -148,11 +157,18 @@ auth = FirebaseAuth.getInstance();
                 .setContentTitle("Mon Service")
                 .setContentText("En train de travailler...")
                 .setContentIntent(pendingIntent).build();
-
-
         startForeground(1337, notification);
+        final ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        final List<ActivityManager.RunningTaskInfo> recentTasks = activityManager.getRunningTasks(Integer.MAX_VALUE);
+
+        for (int i = 0; i < recentTasks.size(); i++)
+        {
+            Log.d("Executed app", "Application executed : " +recentTasks.get(i).baseActivity.toShortString()+ "\t\t ID: "+recentTasks.get(i).id+"");
+        }
+
         super.onStartCommand(intent, flags, startId);
         System.out.println("esh daka");
+
         return START_STICKY;
     }
 
@@ -161,18 +177,13 @@ auth = FirebaseAuth.getInstance();
         // TODO Auto-generated method stub
         return null;
     }
-
-
     @Override
     public void onDestroy() {
         super.onDestroy();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             stopForeground(true);
         }
-
-
     }
-
     public void getLocationFused() {
      //   Toast.makeText(getApplicationContext(), "getLocation", Toast.LENGTH_LONG).show();
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -185,21 +196,30 @@ auth = FirebaseAuth.getInstance();
     }
 
     private void createNotificationChannel() {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             int importance = NotificationManager.IMPORTANCE_LOW;
             NotificationChannel channel = new NotificationChannel("12", "service", importance);
-            //  NotificationChannel channel2 = new NotificationChannel("2", "manque", importance);
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
+
             channel.setShowBadge(true);
             channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
-            // notificationManager.createNotificationChannel(channel2);
         }
     }
+    private boolean  checkNetworkConnectivity()
+    {
+
+
+        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        if(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
+                connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED) {
+           return true;
+        }
+        else
+         return    false;
+    }
+
 
 }
 

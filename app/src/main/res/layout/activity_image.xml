@@ -48,6 +48,13 @@
                 android:layout_height="match_parent"
                 android:orientation="vertical"
                 >
+                <androidx.appcompat.widget.AppCompatSpinner
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/spinner_image"
+                    android:layout_marginTop="60dp"
+                    />
+
 
                 <androidx.cardview.widget.CardView
                     xmlns:Card_View="http://schemas.android.com/tools"
@@ -60,12 +67,14 @@
                         android:layout_height="match_parent"
                         android:orientation="vertical">
 
+
                         <Button
                             android:id="@+id/done"
                             android:layout_width="50dp"
                             android:layout_height="wrap_content"
                             android:layout_gravity="end"
                             android:text="@string/done"
+                            android:visibility="invisible"
 
                             android:textSize="14sp"/>
 

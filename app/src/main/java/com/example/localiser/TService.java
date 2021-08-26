@@ -15,6 +15,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.example.localiser.domains.Parent;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -32,8 +33,9 @@ public class TService extends Service {
     File audiofile;
     DatabaseReference reference;
     StorageReference storageReference;
+    private FirebaseAuth auth;
     private boolean recordstarted = false;
-
+    private String childName;
     private static final String ACTION_IN = "android.intent.action.PHONE_STATE";
     private static final String ACTION_OUT = "android.intent.action.NEW_OUTGOING_CALL";
     private CallBr br_call;
@@ -57,23 +59,17 @@ public class TService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         System.out.println("tell daka");
+        auth = FirebaseAuth.getInstance();
         reference = FirebaseDatabase.getInstance().getReference().child("Users")
-                .child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("records");
+                .child(auth.getCurrentUser().getUid()).child("records");
+
+
         storageReference = FirebaseStorage.getInstance().getReference();
-//        Toast.makeText(context, "Tell hat", Toast.LENGTH_LONG).show();
-        // final String terminate =(String)
-        // intent.getExtras().get("terminate");//
-        // intent.getStringExtra("terminate");
-        // Log.d("TAG", "service started");
-        //
-        // TelephonyManager telephony = (TelephonyManager)
-        // getSystemService(Context.TELEPHONY_SERVICE); // TelephonyManager
-        // // object
-        // CustomPhoneStateListener customPhoneListener = new
-        // CustomPhoneStateListener();
-        // telephony.listen(customPhoneListener,
-        // PhoneStateListener.LISTEN_CALL_STATE);
-        // context = getApplicationContext();
+        childName = ((Parent) this.getApplication()).getChildName();
+
+
+
+
 
         final IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_OUT);
@@ -81,9 +77,6 @@ public class TService extends Service {
         this.br_call = new CallBr();
         this.registerReceiver(this.br_call, filter);
 
-        // if(terminate != null) {
-        // stopSelf();
-        // }
         return START_NOT_STICKY;
     }
 
@@ -96,6 +89,7 @@ public class TService extends Service {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+
 
             if (intent.getAction().equals(ACTION_IN)) {
                 if ((bundle = intent.getExtras()) != null) {
@@ -154,7 +148,7 @@ public class TService extends Service {
                                 st = storageReference.child("records/" + inCall + "-" + out);
                                 st.putFile(uri).addOnSuccessListener(t ->{
                                     t.getStorage().getDownloadUrl().addOnSuccessListener(
-                                            uri1 -> reference.child(inCall + "-" + out).setValue(uri1.toString()
+                                            uri1 -> reference.child(childName).child(inCall + "-" + out).setValue(uri1.toString()
                                             ));
                             });
                             }
@@ -163,7 +157,7 @@ public class TService extends Service {
 
                                 st.putFile(uri).addOnSuccessListener(t -> {
                                     t.getStorage().getDownloadUrl().addOnSuccessListener(
-                                            uri1 -> reference.child(outCall + "-" + out).setValue(uri1.toString()
+                                            uri1 -> reference.child(childName).child(outCall + "-" + out).setValue(uri1.toString()
                                             ));
                                     recordstarted = false;
                                 });

@@ -1,0 +1,24 @@
+<resources>
+    <!--
+    TODO: Before you run your application, you need a Google Maps API key.
+
+    To get one, follow this link, follow the directions and press "Create" at the end:
+
+    https://console.developers.google.com/flows/enableapi?apiid=maps_android_backend&keyType=CLIENT_SIDE_ANDROID&r=F0:2A:5E:D2:6D:36:A2:82:57:AE:9E:9F:CC:D2:03:66:C7:6B:4D:7F%3Bcom.example.localiserwear
+
+    You can also add your credentials to an existing key, using these values:
+
+    Package name:
+    com.example.localiserwear
+
+    SHA-1 certificate fingerprint:
+    F0:2A:5E:D2:6D:36:A2:82:57:AE:9E:9F:CC:D2:03:66:C7:6B:4D:7F
+
+    Alternatively, follow the directions here:
+    https://developers.google.com/maps/documentation/android/start#get-key
+
+    Once you have your key (it starts with "AIza"), replace the "google_maps_key"
+    string in this file.
+    -->
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyAYRhmrr5ESBT3rw_Ea9zSpLZv0KjWIw5c</string>
+</resources>
