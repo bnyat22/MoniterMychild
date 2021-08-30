@@ -31,18 +31,6 @@
             android:icon="@drawable/ic_baseline_headset_mic_24"
             android:title="@string/parler" />
         <item
-            android:id="@+id/tracemenuItem"
-            android:icon="@drawable/ic_baseline_map_24"
-            android:title="@string/trace" />
-        <item
-            android:id="@+id/polygonItem"
-            android:icon="@drawable/ic_baseline_not_interested_24"
-            android:title="@string/restriction" />
-        <item
-            android:id="@+id/browserItem"
-            android:icon="@drawable/ic_baseline_history_24"
-            android:title="Configuration" />
-        <item
             android:id="@+id/logoutmenuItem"
             android:icon="@drawable/ic_baseline_login_24"
             android:title="@string/logout" />

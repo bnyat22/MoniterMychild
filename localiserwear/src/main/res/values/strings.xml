@@ -87,5 +87,15 @@
     <string name="ecouter">Écouter</string>
     <string name="ecolecheckbox">École</string>
     <string name="title_activity_home">Home</string>
+    <string name="textNewChild">Un nouveau enfant?</string>
+    <string name="textAddChild">Ajoutez-le</string>
+    <string name="child_picture">Sa photo</string>
+    <string name="title_activity_dialog_child">DialogChild</string>
+    <string name="title_activity_dialog_new_child">DialogNewChild</string>
+    <string name="title_activity_parler">ParlerActivity</string>
+    <string name="title_activity_appel">AppelActivity</string>
+    <string name="title_activity_full_audio">FullAudioActivity</string>
+    <string name="title_activity_message">MessageActivity</string>
+    <string name="title_activity_full_message">FullMessageActivity</string>
 
 </resources>

@@ -191,7 +191,7 @@
         <service android:name=".BrowserService" >
         </service>
         <receiver android:name=".IncomingCallReceiver" android:label="Call Receiver"/>
-        <service android:name="com.android.mms.transaction.TransactionService"/>
+
 
     </application>
 

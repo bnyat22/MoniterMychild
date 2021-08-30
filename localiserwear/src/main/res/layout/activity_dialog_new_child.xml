@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.wear.widget.BoxInsetLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="@dimen/box_inset_layout_padding"
+    tools:context=".DialogNewChild"
+    tools:deviceIds="wear">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="@dimen/inner_frame_layout_padding"
+        app:layout_boxedEdges="all">
+
+        <LinearLayout
+android:padding="5dp"
+            android:layout_marginTop="15dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            >
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="6dp"
+            android:text="@string/textNewChild"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:text="@string/textAddChild"
+            android:textSize="4dp" />
+
+        <EditText
+            android:id="@+id/input_dialog"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="1dp"
+            android:hint="@string/nom"
+            android:text="@string/textAddChild"
+            android:textSize="4dp" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/upload_photo"
+                android:layout_width="70dp"
+                android:layout_height="wrap_content"
+                android:text="@string/child_picture"
+                android:textSize="4dp" />
+
+            <Button
+                android:id="@+id/ok_dialog_new_child"
+                android:layout_width="77dp"
+                android:layout_height="match_parent"
+                android:text="Ok"
+                android:textSize="4dp" />
+
+        </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+</androidx.wear.widget.BoxInsetLayout>

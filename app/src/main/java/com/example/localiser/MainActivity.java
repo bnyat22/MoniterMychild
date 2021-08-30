@@ -152,22 +152,20 @@ public class MainActivity extends AppCompatActivity {
                                final EditText input = new EditText(MainActivity.this);
                                alert.setView(input);
 
-                               alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                   public void onClick(DialogInterface dialog, int whichButton) {
+                               alert.setPositiveButton("Ok", (dialog, whichButton) -> {
 
 
-                                       startActivityForResult(new Intent(Intent.ACTION_PICK,
-                                               android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI), GET_FROM_GALLERY);
+                                   startActivityForResult(new Intent(Intent.ACTION_PICK,
+                                           MediaStore.Images.Media.INTERNAL_CONTENT_URI), GET_FROM_GALLERY);
 
-                                       reference.child(auth.getCurrentUser().getUid())
-                                               .child("children").child(input.getText().toString()).child("id").setValue(deviceId);
-                                       reference.child(auth.getCurrentUser().getUid())
-                                               .child("children").child(input.getText().toString()).child("picture").setValue(bitmap);
-                                       reference.child(auth.getCurrentUser().getUid())
-                                               .child("children").child(input.getText().toString()).child("network").setValue("true");
-                                       ((Parent) MainActivity.this.getApplication()).setChildName(input.getText().toString());
-                                       startActivity(homeIntent);
-                                   }
+                                   reference.child(auth.getCurrentUser().getUid())
+                                           .child("children").child(input.getText().toString()).child("id").setValue(deviceId);
+                                   reference.child(auth.getCurrentUser().getUid())
+                                           .child("children").child(input.getText().toString()).child("picture").setValue(bitmap);
+                                   reference.child(auth.getCurrentUser().getUid())
+                                           .child("children").child(input.getText().toString()).child("network").setValue("true");
+                                   ((Parent) MainActivity.this.getApplication()).setChildName(input.getText().toString());
+                                   startActivity(homeIntent);
                                });
 
                                alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

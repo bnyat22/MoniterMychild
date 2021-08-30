@@ -4,10 +4,16 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/layout-v26/parler_activity.xml" value="0.11145833333333334" />
+        <entry key="app/src/main/res/layout/activity_full_image.xml" value="0.4316860465116279" />
         <entry key="app/src/main/res/layout/activity_image.xml" value="0.14266304347826086" />
         <entry key="app/src/main/res/layout/activity_layout_video.xml" value="0.14266304347826086" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.25" />
+        <entry key="app/src/main/res/layout/audio_full_screen.xml" value="0.44622093023255816" />
+        <entry key="app/src/main/res/layout/audio_layout_list.xml" value="0.44622093023255816" />
         <entry key="app/src/main/res/layout/browser_activity.xml" value="0.29381443298969073" />
+        <entry key="app/src/main/res/layout/dialog_layout_1.xml" value="0.2777777777777778" />
+        <entry key="app/src/main/res/layout/ecole_popup.xml" value="0.11145833333333334" />
+        <entry key="app/src/main/res/layout/message_full_screen_activity.xml" value="0.4316860465116279" />
         <entry key="app/src/main/res/layout/messages_activity.xml" value="0.14266304347826086" />
         <entry key="app/src/main/res/layout/parler_activity.xml" value="0.33" />
         <entry key="app/src/main/res/layout/registration_activity.xml" value="0.25" />
@@ -15,9 +21,20 @@
         <entry key="app/src/main/res/menu/app_bar_home.xml" value="0.20208333333333334" />
         <entry key="app/src/main/res/xml/file_path.xml" value="0.1082427536231884" />
         <entry key="app/src/main/res/xml/preferences.xml" value="0.121875" />
+        <entry key="localiserwear/src/main/res/layout/activity_appel.xml" value="0.44622093023255816" />
+        <entry key="localiserwear/src/main/res/layout/activity_dialog_child.xml" value="1.0" />
+        <entry key="localiserwear/src/main/res/layout/activity_dialog_new_child.xml" value="0.39098837209302323" />
+        <entry key="localiserwear/src/main/res/layout/activity_full_audio.xml" value="0.653125" />
+        <entry key="localiserwear/src/main/res/layout/activity_full_message.xml" value="0.8125" />
         <entry key="localiserwear/src/main/res/layout/activity_home.xml" value="0.2867063492063492" />
         <entry key="localiserwear/src/main/res/layout/activity_main.xml" value="0.7939560439560439" />
+        <entry key="localiserwear/src/main/res/layout/activity_message.xml" value="0.4316860465116279" />
+        <entry key="localiserwear/src/main/res/layout/activity_parler.xml" value="0.44622093023255816" />
+        <entry key="localiserwear/src/main/res/layout/audio_adapter_layout.xml" value="0.44622093023255816" />
+        <entry key="localiserwear/src/main/res/layout/dialog_new_child.xml" value="0.11145833333333334" />
+        <entry key="localiserwear/src/main/res/layout/message_layout_list.xml" value="0.67" />
         <entry key="localiserwear/src/main/res/menu/app_bar_home.xml" value="0.4875" />
+        <entry key="localiserwear/src/main/res/xml/preferences.xml" value="0.44622093023255816" />
       </map>
     </option>
   </component>

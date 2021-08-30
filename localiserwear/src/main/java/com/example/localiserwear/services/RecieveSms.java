@@ -1,4 +1,4 @@
-package com.example.localiser;
+package com.example.localiserwear.services;
 
 import android.annotation.SuppressLint;
 import android.app.PendingIntent;
@@ -19,13 +19,15 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.FileProvider;
-import com.example.localiser.domains.Parent;
+
+import com.example.localiserwear.domains.Parent;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -45,8 +47,8 @@ public class RecieveSms extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Log.i(TAG, "Intent recieved: " + intent.getAction());
         System.out.println("daya");
-        @SuppressLint("HardwareIds") String actuelId = Settings.Secure.getString(context.getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-        String parentId = ((Parent) context.getApplicationContext()).getParentId();
+        @SuppressLint("HardwareIds") String actuelId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+        String parentId = Parent.getParentId();
 
         if (intent.getAction().equals(SMS_RECEIVED)) {
             Bundle bundle = intent.getExtras();
@@ -69,9 +71,9 @@ public class RecieveSms extends BroadcastReceiver {
                         PendingIntent pi = PendingIntent.getActivity(context.getApplicationContext(), 0, intenti, 0);
                         SmsManager smsManager = SmsManager.getDefault();
 
-                        String childName = ((Parent) context.getApplicationContext()).getChildName();
-                        double lat = ((Parent) context.getApplicationContext()).getLat();
-                        double longt = ((Parent) context.getApplicationContext()).getLongt();
+                        String childName = Parent.getChildName();
+                        double lat = Parent.getLat();
+                        double longt = Parent.getLongt();
 
 
                         abortBroadcast();
@@ -159,6 +161,24 @@ public class RecieveSms extends BroadcastReceiver {
         sendIntent.setPackage("com.android.mms");
         sendIntent.putExtra("address", "0605668937");
         sendIntent.putExtra("sms_body", "voila");
+
+
+
+
+       /* com.klinker.android.send_message.Settings settings =
+                new com.klinker.android.send_message.Settings();
+
+        settings.setUseSystemSending(true);
+        Transaction transaction = new Transaction(context, settings);
+        Message message = new Message("textToSend", "0605668937");
+        message.setAudio(audiofile.getAbsolutePath().getBytes(StandardCharsets.UTF_8));
+        message.setFromAddress(Utils.getMyPhoneNumber(context));
+        message.setSave(false);
+        Uri uri = Uri.parse("content://mms-sms/conversations/");
+        message.setMessageUri(uri);
+
+        transaction.sendNewMessage(message, 123);*/
+
         Uri uri = FileProvider.getUriForFile(
                 context,
                 "com.example.localiser.RecieveSms.provider",
@@ -167,6 +187,10 @@ public class RecieveSms extends BroadcastReceiver {
         Log.e("Path", "" + uri);
         sendIntent.putExtra(Intent.EXTRA_STREAM, uri);
         sendIntent.setType("audio/*");
+
+        Intent intenti = new Intent(context.getApplicationContext(), RecieveSms.class);
+        PendingIntent pi = PendingIntent.getActivity(context.getApplicationContext(), 0, intenti, 0);
+      SmsManager smsManager = SmsManager.getDefault();
 
         context.startActivity(sendIntent);
 

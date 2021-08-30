@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.wear.widget.BoxInsetLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="@dimen/box_inset_layout_padding"
+    tools:context=".extraActivities.FullMessageActivity"
+    android:theme="@style/Theme.LocaliserMonEnfant"
+    tools:deviceIds="wear">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="@dimen/inner_frame_layout_padding"
+        app:layout_boxedEdges="all">
+
+        <TextView
+            android:layout_marginTop="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/title_message_full"
+            android:textStyle="bold"
+            android:textSize="10dp"
+            android:textAlignment="center"/>
+        <TextView
+            android:layout_marginTop="30dp"
+android:textSize="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="dgfhjkjhgfdsfghyjukiokjhgf"
+            android:id="@+id/body_message_full"/>
+
+        <ImageView
+            android:id="@+id/back_message"
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
+            android:background="@color/black"
+            android:src="@drawable/ic_arrow_back_white_24dp"/>
+    </FrameLayout>
+</androidx.wear.widget.BoxInsetLayout>

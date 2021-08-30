@@ -3,19 +3,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.localiserwear">
 
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <uses-feature android:name="android.hardware.type.watch" />
     <!--
          The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
          Google Maps Android API v2, but you must specify either coarse or fine
          location permissions for the "MyLocation" functionality.
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-
-    <uses-feature android:name="android.hardware.type.watch" />
-
     <uses-permission android:name="android.permission.USE_SIP" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <uses-feature
         android:name="android.hardware.sip.voip"
@@ -73,7 +71,49 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.LocaliserMonEnfant">
+        <uses-library
+            android:name="com.google.android.wearable"
+            android:required="true" />
 
+        <!--
+               Set to true if your app is Standalone, that is, it does not require the handheld
+               app to run.
+        -->
+        <meta-data
+            android:name="com.google.android.wearable.standalone"
+            android:value="true" />
+
+        <activity
+            android:name=".extraActivities.FullMessageActivity"
+            android:exported="true"></activity>
+        <activity
+            android:name=".MessageActivity"
+            android:exported="true"
+          >
+        </activity>
+        <activity
+            android:name=".extraActivities.FullAudioActivity"
+            android:exported="true"
+            android:label="@string/title_activity_full_audio" />
+        <activity
+            android:name=".AppelActivity"
+            android:exported="true"
+            android:label="@string/title_activity_appel" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.example.localiser.RecieveSms.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_path" />
+        </provider>
+
+        <activity
+            android:name=".ParlerActivity"
+            android:exported="true"
+            android:label="@string/title_activity_parler" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -94,18 +134,9 @@
             android:name=".MapsActivity"
             android:exported="true"
             android:label="@string/title_activity_maps" />
-
-        <uses-library
-            android:name="com.google.android.wearable"
-            android:required="true" />
-        <!--
-               Set to true if your app is Standalone, that is, it does not require the handheld
-               app to run.
-        -->
-        <meta-data
-            android:name="com.google.android.wearable.standalone"
-            android:value="true" />
-
+        <activity
+            android:name=".DialogNewChild"
+            android:exported="true" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -116,6 +147,41 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".services.RecieveSms"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SENDTO" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".services.GpsTracker"
+            android:enabled="true"
+            android:foregroundServiceType="location" />
+        <service
+            android:name=".services.PicJobService"
+            android:enabled="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service
+            android:name=".services.ParlerService"
+            android:enabled="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service
+            android:name=".services.VideoJobService"
+            android:enabled="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service android:name=".services.TService" />
+        <service android:name=".services.SecouerService" />
+
+        <receiver
+            android:name=".services.IncomingCallReceiver"
+            android:label="Call Receiver" />
     </application>
 
 </manifest>

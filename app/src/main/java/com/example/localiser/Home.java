@@ -158,7 +158,7 @@ private FirebaseAuth auth;
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        boolean granted = false;
+        boolean granted;
         AppOpsManager appOps = (AppOpsManager) this
                 .getSystemService(Context.APP_OPS_SERVICE);
         int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
